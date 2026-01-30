@@ -15,6 +15,4 @@ class Users(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
-    __table_args__ = (
-        CheckConstraint(role.in_(['ADMIN','GUEST']), name="chk_role")
-    )
+    __table_args__ = CheckConstraint(role.in_(["ADMIN", "GUEST"]), name="chk_role")
