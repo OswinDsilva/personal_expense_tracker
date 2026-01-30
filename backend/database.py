@@ -1,16 +1,11 @@
-import psycopg2 as psy
-from psycopg2.extensions import connection as Connection, cursor as Cursor
-from psycopg2.pool import SimpleConnectionPool
-from config import DATABASE_URL
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from .config import DATABASE_URL
 
-connection_pool = SimpleConnectionPool(
-    1,
-    10,
-    dsn = DATABASE_URL
-)
+engine = create_engine(url=DATABASE_URL, echo=True)
 
-def get_connection() -> Connection:
-    return connection_pool.getconn()
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-def release_connection(connection : Connection):
-    connection_pool.putconn(connection)
+
+class Base(DeclarativeBase):
+    pass

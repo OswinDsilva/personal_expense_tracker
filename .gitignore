@@ -14,3 +14,4 @@ wheels/
 .env.prod
 .env.dev
 .env.test
+.ruff_cache
