@@ -10,7 +10,7 @@ from sqlalchemy import (
     String,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from ..database import Base
 from .category import Category
@@ -71,6 +71,14 @@ class Transaction(Base):
             name="chk_transfer_link",
         ),
     )
+
+    @validates('payment_method')
+    def normalize_payment_method(self, key, value):
+        return value.upper() if value else value
+    
+    @validates('transaction_type')
+    def normalize_transaction_type(self, key, value):
+        return value.upper() if value else value
 
     def __repr__(self):
         return f"<Transaction(id={self.id}, date={self.transaction_date}, amount={self.amount}, type={self.transaction_type})>"

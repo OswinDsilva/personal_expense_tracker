@@ -50,6 +50,7 @@ CREATE TABLE starting_balances(
     upi_balance DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     CONSTRAINT uq_month UNIQUE(month)
+    CONSTRAINT chk_first_of_month CHECK (EXTRACT(DAY FROM month) = 1)
 );
 
 --transactions table

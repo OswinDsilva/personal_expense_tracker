@@ -1,25 +1,32 @@
-import pytest 
-from backend.database import get_connection,release_connection
-from fastapi.testclient import TestClient
-from backend.main import app
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
-client = TestClient(app)
+from backend.config import TEST_DATABASE_URL
+from backend.database import Base
 
-@pytest.fixture(autouse=True)
-def reset_db():
-    try:
-        connection = get_connection()
-        cur = connection.cursor()
 
-        cur.execute("TRUNCATE users,transactions,starting_balances,categories;")
-        
-        # Seeding categories 
-        cur.execute("""INSERT INTO categories(name) VALUES ('Food'),('Transport'),('Entertainment'),('Academics'),('Clothing'),('Footwear');""")
+@pytest.fixture(scope="session")
+def engine():
+    engine = create_engine(url=TEST_DATABASE_URL)
 
-        # Login using testclient 
+    Base.metadata.create_all(engine)
 
-    except Exception as e:
-        connection.rollback()
-        raise
-    finally:
-        release_connection(connection)
+    yield engine
+
+    Base.metadata.drop_all(engine)
+    engine.dispose()
+
+
+@pytest.fixture(scope="function")
+def db_session(engine):
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = Session(bind=connection)
+
+    yield session
+
+    session.close()
+    if transaction.is_active:
+        transaction.rollback()
+    connection.close()

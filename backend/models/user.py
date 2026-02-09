@@ -17,9 +17,13 @@ class User(Base):
 
     __table_args__ = (CheckConstraint("role IN ('ADMIN', 'GUEST')", name="chk_role"),)
 
-    @validates
+    @validates("username")
     def normalize_username(self, key, value):
         return value.lower() if value else value
+    
+    @validates("role")
+    def normalize_role(self, key, value):
+        return value.upper() if value else value
 
     def __repr__(self):
         return (
