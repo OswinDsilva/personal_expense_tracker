@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import (
@@ -34,7 +34,9 @@ class Transaction(Base):
     is_debit: Mapped[bool | None] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
     category: Mapped["Category"] = relationship()
@@ -72,11 +74,11 @@ class Transaction(Base):
         ),
     )
 
-    @validates('payment_method')
+    @validates("payment_method")
     def normalize_payment_method(self, key, value):
         return value.upper() if value else value
-    
-    @validates('transaction_type')
+
+    @validates("transaction_type")
     def normalize_transaction_type(self, key, value):
         return value.upper() if value else value
 
