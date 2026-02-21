@@ -15,3 +15,5 @@ wheels/
 .env.dev
 .env.test
 .ruff_cache
+
+non_imp_info/

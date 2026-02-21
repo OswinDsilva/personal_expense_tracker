@@ -23,21 +23,21 @@ class User(Base):
     @validates("username")
     def normalize_username(self, key, value):
         return value.lower() if value else value
-    
+
     @validates("role")
     def normalize_role(self, key, value):
         return value.upper() if value else value
-    
+
     @property
     def password(self):
         raise AttributeError("Password is write-only")
-    
+
     @password.setter
-    def password(self, plain_password:str):
+    def password(self, plain_password: str):
         self.password_hash = self._pwd_hasher.hash(plain_password)
 
-    def verify_password(self,plain_password):
-        return self._pwd_hasher.verify(self.password_hash,plain_password)
+    def verify_password(self, plain_password):
+        return self._pwd_hasher.verify(self.password_hash, plain_password)
 
     def __repr__(self):
         return (

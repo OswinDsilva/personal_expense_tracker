@@ -18,7 +18,7 @@ class StartingBalance(Base):
 
     __table_args__ = (
         CheckConstraint("cash_balance >= 0 AND upi_balance >= 0", name="chk_amount_positive"),
-        CheckConstraint("EXTRACT(DAY FROM month) = 1", name="chk_first_of_month")
+        CheckConstraint("EXTRACT(DAY FROM month) = 1", name="chk_first_of_month"),
     )
 
     def __repr__(self):
