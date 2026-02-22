@@ -1,5 +1,6 @@
 from .auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 from .categories import CategoryRequest, CategoryResponse
+from .starting_balance import StartingBalanceCreate, StartingBalanceResponse, StartingBalanceUpdate
 
 __all__ = [
     "RegisterRequest",
@@ -8,4 +9,7 @@ __all__ = [
     "TokenResponse",
     "CategoryRequest",
     "CategoryResponse",
+    "StartingBalanceCreate",
+    "StartingBalanceResponse",
+    "StartingBalanceUpdate",
 ]

@@ -2,12 +2,13 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from datetime import date
 
 from backend.auth.jwt import create_access_token
 from backend.config import TEST_DATABASE_URL
 from backend.database import Base, get_db
 from backend.main import app
-from backend.models import User, Category
+from backend.models import Category, User, StartingBalance
 
 
 @pytest.fixture(scope="session")
@@ -61,11 +62,22 @@ def auth_headers(db_session):
 
     return {"Authorization": f"Bearer {token}"}
 
-@pytest.fixture(scope='function')
+
+@pytest.fixture(scope="function")
 def seed_categories(db_session):
     cat1 = Category(name="food")
     cat2 = Category(name="travel")
     cat3 = Category(name="entertainment")
-    db_session.add_all([cat1,cat2,cat3])
+    db_session.add_all([cat1, cat2, cat3])
     db_session.commit()
-    return [cat1,cat2,cat3]
+    return [cat1, cat2, cat3]
+
+
+@pytest.fixture(scope='function')
+def seed_starting_balances(db_session):
+    sb1 = StartingBalance(month=date(2026,2,1),upi_balance=0,cash_balance=0)
+    sb2 = StartingBalance(month=date(2026,1,1),upi_balance=0,cash_balance=0)
+    sb3 = StartingBalance(month=date(2025,12,1),upi_balance=0,cash_balance=0)
+    db_session.add_all([sb1,sb2,sb3])
+    db_session.commit()
+    return [sb1,sb2,sb3]
