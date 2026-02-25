@@ -1,7 +1,14 @@
 from .auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 from .categories import CategoryRequest, CategoryResponse
 from .starting_balance import StartingBalanceCreate, StartingBalanceResponse, StartingBalanceUpdate
-from .transactions import TransactionCreate, TransactionResponse, TransactionUpdate
+from .transactions import (
+    PaymentMethod,
+    TransactionCreate,
+    TransactionResponse,
+    TransactionType,
+    TransactionUpdate,
+    TransferCreate,
+)
 
 __all__ = [
     "RegisterRequest",
@@ -16,4 +23,7 @@ __all__ = [
     "TransactionCreate",
     "TransactionResponse",
     "TransactionUpdate",
+    "TransferCreate",
+    "TransactionType",
+    "PaymentMethod",
 ]

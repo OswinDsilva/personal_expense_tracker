@@ -9,7 +9,7 @@ from backend.auth.jwt import create_access_token
 from backend.config import TEST_DATABASE_URL
 from backend.database import Base, get_db
 from backend.main import app
-from backend.models import Category, StartingBalance, User
+from backend.models import Category, StartingBalance, Transaction, User
 
 
 @pytest.fixture(scope="session")
@@ -82,3 +82,48 @@ def seed_starting_balances(db_session):
     db_session.add_all([sb1, sb2, sb3])
     db_session.commit()
     return [sb1, sb2, sb3]
+
+
+@pytest.fixture(scope="function")
+def seed_transactions(db_session, seed_categories):
+    t1 = Transaction(
+        transaction_date=date(2026,2,24),
+        description="Grocery shopping",
+        amount=50,
+        payment_method="UPI",
+        transaction_type="EXPENSE",
+        category_id=seed_categories[0].id,
+    )
+    t2 = Transaction(
+        transaction_date=date(2026,2,24),
+        description="Transfer to cash",
+        amount=100,
+        payment_method="UPI",
+        transaction_type="TRANSFER",
+        is_debit=True,
+    )
+    t3 = Transaction(
+        transaction_date=date(2026,2,24),
+        description="Test",
+        amount=100,
+        payment_method="CASH",
+        transaction_type="TRANSFER",
+        is_debit=False,
+    )
+    t4 = Transaction(
+        transaction_date=date(2026,2,24),
+        description="Salary payment",
+        amount=5000,
+        payment_method="UPI",
+        transaction_type="INCOME",
+    )
+
+    db_session.add_all([t1, t2, t3, t4])
+    db_session.flush()
+
+    t2.linked_transfer_id = t3.id
+    t3.linked_transfer_id = t2.id
+
+    db_session.commit()
+
+    return [t1, t2, t3, t4]

@@ -72,6 +72,10 @@ class Transaction(Base):
             "transaction_type = 'TRANSFER' OR linked_transfer_id IS NULL",
             name="chk_transfer_link",
         ),
+        CheckConstraint(
+            "transaction_type <> 'TRANSFER' OR category_id IS NULL",
+            name="chk_transfer_no_category"
+        )
     )
 
     @validates("payment_method")
