@@ -1,14 +1,17 @@
+from datetime import date
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from ..auth.jwt import get_current_user
 from ..database import get_db
 from ..models import Category, Transaction, User
 from ..schema import (
+    PaymentMethod,
     TransactionCreate,
+    TransactionListResponse,
     TransactionResponse,
     TransactionType,
     TransactionUpdate,
@@ -84,13 +87,90 @@ def create_transfer_transaction(
     return [source_transfer, destination_transfer]
 
 
-@router.get("/", response_model=List[TransactionResponse])
+@router.get("/", response_model=TransactionListResponse)
 def get_all_transactions(
-    curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    start_date: date | None = None,
+    end_date: date | None = None,
+    category_id: int | None = None,
+    transaction_type: str | None = None,
+    payment_method: str | None = None,
+    cursor: str | None = None,  # Format for the cursor is {cursor_date}_{id} , ex: 2026-02-01_123
+    limit: int = Query(default=50, ge=1, le=100),
+    curr_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
-    transactions = db.execute(select(Transaction)).scalars().all()
+    query = select(Transaction)
 
-    return transactions
+    if start_date is not None:
+        query = query.where(Transaction.transaction_date >= start_date)
+
+    if end_date is not None:
+        query = query.where(Transaction.transaction_date <= end_date)
+
+    if category_id is not None:
+        query = query.where(Transaction.category_id == category_id)
+
+    if transaction_type is not None:
+        transaction_type_upper = transaction_type.upper()
+        valid_types = [t.value for t in TransactionType]
+
+        if transaction_type_upper not in valid_types:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"Transaction type must be one of: {valid_types}",
+            )
+
+        query = query.where(Transaction.transaction_type == transaction_type_upper)
+
+    if payment_method is not None:
+        payment_method_upper = payment_method.upper()
+        valid_methods = [t.value for t in PaymentMethod]
+
+        if payment_method_upper not in valid_methods:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=f"Payment method must be one of: {valid_methods}",
+            )
+
+        query = query.where(Transaction.payment_method == payment_method_upper)
+
+    
+
+    if cursor:
+        try:
+            cursor_date_str, cursor_id_str = cursor.split("_")
+            cursor_date = date.fromisoformat(cursor_date_str)
+            cursor_id = int(cursor_id_str)
+        except (ValueError,AttributeError):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Wrong cursor format, Expected: YYYY-MM-DD_ID")
+        query = query.where(
+            or_(
+                Transaction.transaction_date < cursor_date,
+                and_(Transaction.transaction_date == cursor_date, Transaction.id < cursor_id),
+            )
+        )
+
+    query = query.order_by(Transaction.transaction_date.desc(), Transaction.id.desc())
+
+    query = query.limit(limit + 1)
+
+    transactions = db.execute(query).scalars().all()
+
+    next_cursor = None
+
+    has_more = len(transactions) > limit
+
+    if has_more:
+        transactions = transactions[:limit]
+
+    if has_more and transactions:
+        last_transaction = transactions[-1]
+        next_cursor = f"{last_transaction.transaction_date.isoformat()}_{last_transaction.id}"
+
+    return {
+        "data": transactions,
+        "pagination": {"next_cursor": next_cursor, "has_more": has_more, "limit": limit},
+    }
 
 
 @router.get("/{id}", response_model=TransactionResponse)

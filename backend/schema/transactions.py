@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
+from typing import List
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing_extensions import Self
@@ -100,3 +101,14 @@ class TransactionUpdate(BaseModel):
         if v > date.today():
             raise ValueError("Cannot create transactions for future dates")
         return v
+
+
+class PaginationMetaData(BaseModel):
+    next_cursor: str | None
+    has_more: bool
+    limit: int
+
+
+class TransactionListResponse(BaseModel):
+    data: List[TransactionResponse]
+    pagination: PaginationMetaData

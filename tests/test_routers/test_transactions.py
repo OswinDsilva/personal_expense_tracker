@@ -196,6 +196,130 @@ def test_get_all_transactions_success(client, auth_headers, seed_transactions):
     assert len(response.json()) == len(seed_transactions)
 
 
+def test_filter_transactions_by_date_range(client, auth_headers, seed_transactions):
+    response = client.get(
+        "/transactions",
+        params={"start_date": "2026-02-01", "end_date": "2026-02-02"},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    returned_ids = [r["id"] for r in response.json()]
+
+    assert seed_transactions[0].id in returned_ids
+
+    assert seed_transactions[1].id not in returned_ids
+    assert seed_transactions[2].id not in returned_ids
+    assert seed_transactions[3].id not in returned_ids
+
+
+def test_filter_transactions_by_only_start_date(client, auth_headers, seed_transactions):
+    response = client.get(
+        "/transactions", params={"start_date": "2026-02-03"}, headers=auth_headers
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    returned_ids = [r["id"] for r in response.json()]
+
+    assert seed_transactions[0].id not in returned_ids
+
+    assert seed_transactions[1].id in returned_ids
+    assert seed_transactions[2].id in returned_ids
+    assert seed_transactions[3].id in returned_ids
+
+
+def test_filter_transaction_by_only_end_date(client, auth_headers, seed_transactions):
+    response = client.get("/transactions", params={"end_date": "2026-02-24"}, headers=auth_headers)
+
+    assert response.status_code == status.HTTP_200_OK
+
+    returned_ids = [r["id"] for r in response.json()]
+
+    assert seed_transactions[0].id in returned_ids
+    assert seed_transactions[1].id in returned_ids
+    assert seed_transactions[2].id in returned_ids
+
+    assert seed_transactions[3].id not in returned_ids
+
+
+def test_filter_transactions_by_category(client, auth_headers, seed_transactions, seed_categories):
+    response = client.get(
+        "/transactions", params={"category_id": seed_categories[0].id}, headers=auth_headers
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+
+    for record in data:
+        assert record["category_id"] == seed_categories[0].id
+
+
+def test_filter_transactions_by_transaction_type(client, auth_headers, seed_transactions):
+    response = client.get(
+        "/transactions", params={"transaction_type": "transfer"}, headers=auth_headers
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+
+    for record in data:
+        assert record["transaction_type"] == "TRANSFER"
+
+
+def test_filter_transactions_invalid_transaction_type(client, auth_headers, seed_transactions):
+    response = client.get(
+        "/transactions", params={"transaction_type": "wrong"}, headers=auth_headers
+    )
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+def test_filter_transactions_by_payment_method(client, auth_headers, seed_transactions):
+    response = client.get("/transactions", params={"payment_method": "upi"}, headers=auth_headers)
+
+    assert response.status_code == status.HTTP_200_OK
+
+    data = response.json()
+
+    for record in data:
+        assert record["payment_method"] == "UPI"
+
+
+def test_filter_transactions_invalid_payment_method(client, auth_headers, seed_transactions):
+    response = client.get("/transactions", params={"payment_method": "wrong"}, headers=auth_headers)
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
+def test_filter_transactions_by_multiple_filters(
+    client, auth_headers, seed_transactions, seed_categories
+):
+    response = client.get(
+        "/transactions",
+        params={
+            "start_date": "2026-02-01",
+            "end_date": "2026-02-24",
+            "category_id": seed_categories[0].id,
+            "transaction_type": "expense",
+            "payment_method": "upi",
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    returned_ids = [r["id"] for r in response.json()]
+
+    assert seed_transactions[0].id in returned_ids
+
+    assert seed_transactions[1].id not in returned_ids
+    assert seed_transactions[2].id not in returned_ids
+    assert seed_transactions[3].id not in returned_ids
+
+
 def test_get_all_transactions_no_auth(client, seed_transactions):
     response = client.get("/transactions")
 
