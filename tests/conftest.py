@@ -87,7 +87,7 @@ def seed_starting_balances(db_session):
 @pytest.fixture(scope="function")
 def seed_transactions(db_session, seed_categories):
     t1 = Transaction(
-        transaction_date=date(2026,2,2),
+        transaction_date=date(2026, 2, 2),
         description="Grocery shopping",
         amount=50,
         payment_method="UPI",
@@ -95,7 +95,7 @@ def seed_transactions(db_session, seed_categories):
         category_id=seed_categories[0].id,
     )
     t2 = Transaction(
-        transaction_date=date(2026,2,24),
+        transaction_date=date(2026, 2, 24),
         description="Transfer to cash",
         amount=100,
         payment_method="UPI",
@@ -103,7 +103,7 @@ def seed_transactions(db_session, seed_categories):
         is_debit=True,
     )
     t3 = Transaction(
-        transaction_date=date(2026,2,24),
+        transaction_date=date(2026, 2, 24),
         description="Test",
         amount=100,
         payment_method="CASH",
@@ -111,7 +111,7 @@ def seed_transactions(db_session, seed_categories):
         is_debit=False,
     )
     t4 = Transaction(
-        transaction_date=date(2026,2,25),
+        transaction_date=date(2026, 2, 25),
         description="Salary payment",
         amount=5000,
         payment_method="UPI",

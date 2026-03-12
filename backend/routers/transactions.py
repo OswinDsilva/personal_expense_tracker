@@ -134,15 +134,16 @@ def get_all_transactions(
 
         query = query.where(Transaction.payment_method == payment_method_upper)
 
-    
-
     if cursor:
         try:
             cursor_date_str, cursor_id_str = cursor.split("_")
             cursor_date = date.fromisoformat(cursor_date_str)
             cursor_id = int(cursor_id_str)
-        except (ValueError,AttributeError):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Wrong cursor format, Expected: YYYY-MM-DD_ID")
+        except (ValueError, AttributeError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Wrong cursor format, Expected: YYYY-MM-DD_ID",
+            )
         query = query.where(
             or_(
                 Transaction.transaction_date < cursor_date,

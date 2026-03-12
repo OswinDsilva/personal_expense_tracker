@@ -34,19 +34,22 @@ def test_login_wrong_password(client):
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
+
 def test_login_nonexistent_user(client):
     response = client.post("/auth/login", json={"username": "test", "password": "wrongpass"})
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-def test_get_me_with_token(client,auth_headers):
-    response = client.get("/auth/me",headers=auth_headers)
+
+def test_get_me_with_token(client, auth_headers):
+    response = client.get("/auth/me", headers=auth_headers)
 
     assert response.status_code == status.HTTP_200_OK
     assert "username" in response.json()
     assert "role" in response.json()
     assert "password" not in response.json()
     assert "password_hash" not in response.json()
+
 
 def test_get_me_without_token(client):
     response = client.get("/auth/me")

@@ -193,7 +193,7 @@ def test_get_all_transactions_success(client, auth_headers, seed_transactions):
     response = client.get("/transactions", headers=auth_headers)
 
     assert response.status_code == status.HTTP_200_OK
-    assert len(response.json()) == len(seed_transactions)
+    assert len(response.json()["data"]) == len(seed_transactions)
 
 
 def test_filter_transactions_by_date_range(client, auth_headers, seed_transactions):
@@ -205,7 +205,7 @@ def test_filter_transactions_by_date_range(client, auth_headers, seed_transactio
 
     assert response.status_code == status.HTTP_200_OK
 
-    returned_ids = [r["id"] for r in response.json()]
+    returned_ids = [r["id"] for r in response.json()["data"]]
 
     assert seed_transactions[0].id in returned_ids
 
@@ -221,7 +221,7 @@ def test_filter_transactions_by_only_start_date(client, auth_headers, seed_trans
 
     assert response.status_code == status.HTTP_200_OK
 
-    returned_ids = [r["id"] for r in response.json()]
+    returned_ids = [r["id"] for r in response.json()["data"]]
 
     assert seed_transactions[0].id not in returned_ids
 
@@ -235,7 +235,7 @@ def test_filter_transaction_by_only_end_date(client, auth_headers, seed_transact
 
     assert response.status_code == status.HTTP_200_OK
 
-    returned_ids = [r["id"] for r in response.json()]
+    returned_ids = [r["id"] for r in response.json()["data"]]
 
     assert seed_transactions[0].id in returned_ids
     assert seed_transactions[1].id in returned_ids
@@ -251,7 +251,7 @@ def test_filter_transactions_by_category(client, auth_headers, seed_transactions
 
     assert response.status_code == status.HTTP_200_OK
 
-    data = response.json()
+    data = response.json()["data"]
 
     for record in data:
         assert record["category_id"] == seed_categories[0].id
@@ -264,7 +264,7 @@ def test_filter_transactions_by_transaction_type(client, auth_headers, seed_tran
 
     assert response.status_code == status.HTTP_200_OK
 
-    data = response.json()
+    data = response.json()["data"]
 
     for record in data:
         assert record["transaction_type"] == "TRANSFER"
@@ -283,7 +283,7 @@ def test_filter_transactions_by_payment_method(client, auth_headers, seed_transa
 
     assert response.status_code == status.HTTP_200_OK
 
-    data = response.json()
+    data = response.json()["data"]
 
     for record in data:
         assert record["payment_method"] == "UPI"
@@ -311,7 +311,7 @@ def test_filter_transactions_by_multiple_filters(
     )
     assert response.status_code == status.HTTP_200_OK
 
-    returned_ids = [r["id"] for r in response.json()]
+    returned_ids = [r["id"] for r in response.json()["data"]]
 
     assert seed_transactions[0].id in returned_ids
 
@@ -324,6 +324,79 @@ def test_get_all_transactions_no_auth(client, seed_transactions):
     response = client.get("/transactions")
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+# Pagination tests
+def test_pagination_first_page(client, auth_headers, seed_transactions):
+    response = client.get("/transactions?limit=2", headers=auth_headers)
+    data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert data["pagination"]["next_cursor"] is not None
+    assert data["pagination"]["has_more"] is True
+
+    assert data["data"][0]["id"] == seed_transactions[3].id
+    assert data["data"][1]["id"] == seed_transactions[2].id
+
+
+def test_pagination_last_page(client, auth_headers, seed_transactions):
+    response1 = client.get("/transactions?limit=2", headers=auth_headers)
+
+    data1 = response1.json()
+    assert data1["pagination"]["next_cursor"] is not None
+
+    next_cursor = data1["pagination"]["next_cursor"]
+    response2 = client.get(
+        f"/transactions?cursor={next_cursor}",
+        headers=auth_headers,
+    )
+
+    data2 = response2.json()
+
+    assert response2.status_code == status.HTTP_200_OK
+    assert data2["pagination"]["next_cursor"] is None
+    assert data2["pagination"]["has_more"] is False
+    assert len(data2["data"]) == 2
+    assert data2["data"][0]["id"] == seed_transactions[1].id
+    assert data2["data"][1]["id"] == seed_transactions[0].id
+
+
+def test_pagination_invalid_cursor(client, auth_headers, seed_transactions):
+    response = client.get("/transactions?cursor=invalid", headers=auth_headers)
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+def test_pagination_with_filters(client, auth_headers, seed_transactions, seed_categories):
+    response = client.get(
+        "/transactions?limit=1",
+        params={
+            "start_date": "2026-02-01",
+            "end_date": "2026-02-24",
+        },
+        headers=auth_headers,
+    )
+
+    next_cursor = response.json()["pagination"]["next_cursor"]
+
+    response2 = client.get(
+        f"/transactions?cursor={next_cursor}",
+        params={
+            "start_date": "2026-02-01",
+            "end_date": "2026-02-24",
+        },
+        headers=auth_headers,
+    )
+
+    data = response2.json()
+
+    assert response2.status_code == status.HTTP_200_OK
+
+    for transaction in data["data"]:
+        txn_date = date.fromisoformat(transaction["transaction_date"])
+        assert date(2026, 2, 1) <= txn_date <= date(2026, 2, 24)
+
+    assert "pagination" in data
 
 
 # GET "/transactions/{id}"
