@@ -1,5 +1,5 @@
 from calendar import monthrange
-from datetime import date, timedelta
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import and_, extract, select
@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..auth.jwt import get_current_user
 from ..database import get_db
-from ..models import StartingBalance, Transaction, User
+from ..models import Transaction, User
 from ..schema import MonthlyDataResponse, YearlyDataResponse
 from ..utils.reports import is_credit, is_debit, starting_balance_resolver
 
@@ -27,14 +27,15 @@ def get_monthly_data(
         )
 
     try:
-        cash_net, upi_net = starting_balance_resolver(date(year,month,1),db)
+        starting_balances = starting_balance_resolver(date(year, month, 1), db)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="No starting balance found. Create one first.",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No starting balance found. Create one first.",
         )
-    
-    actual_starting_cash = cash_net
-    actual_starting_upi = upi_net
+
+    actual_starting_cash = starting_balances["cash"]
+    actual_starting_upi = starting_balances["upi"]
 
     transactions = (
         db.execute(
@@ -161,10 +162,11 @@ def get_yearly_data(
     final_cash_balance = total_cash_income - total_cash_spending
 
     try:
-        net_balance_change = starting_balance_resolver(date(year,1,1),db)
+        net_balance_change = starting_balance_resolver(date(year, 1, 1), db)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="No starting balance found. Create one first.",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No starting balance found. Create one first.",
         )
 
     final_upi_balance += net_balance_change["upi"]
@@ -183,4 +185,4 @@ def get_yearly_data(
 
 @router.get("/{year}/{month}")
 def get_generate_monthly_report(year: int, month: int, curr_user: User = Depends(get_current_user)):
-    pass
+    
