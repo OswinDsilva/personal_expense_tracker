@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from fastapi import status
 
@@ -33,14 +33,9 @@ def test_get_monthly_data_invalid_month_fail(client, auth_headers, seed_transact
 
 
 def test_get_monthly_data_future_month_success(client, auth_headers, seed_transactions):
-    today = date.today()
-    year = today.year
-    month = today.month
-    if month == 12:
-        year = year + 1
-        month = 1
-
-    response = client.get(f"reports/data/{year}/{month}", headers=auth_headers)
+    test = date.today() + timedelta(days=31)
+    
+    response = client.get(f"reports/data/{test.year}/{test.month}", headers=auth_headers)
 
     assert response.status_code == status.HTTP_200_OK
 

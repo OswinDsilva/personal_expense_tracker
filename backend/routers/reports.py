@@ -9,7 +9,7 @@ from ..auth.jwt import get_current_user
 from ..database import get_db
 from ..models import StartingBalance, Transaction, User
 from ..schema import MonthlyDataResponse, YearlyDataResponse
-from ..utils.reports import is_credit, is_debit
+from ..utils.reports import is_credit, is_debit, starting_balance_resolver
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -26,52 +26,15 @@ def get_monthly_data(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Month must be between 1 and 12"
         )
 
-    starting_balance = db.execute(
-        select(StartingBalance)
-        .where(StartingBalance.month <= date(year, month, 1))
-        .order_by(StartingBalance.month.desc())
-        .limit(1)
-    ).scalar_one_or_none()
-
-    if not starting_balance:
+    try:
+        cash_net, upi_net = starting_balance_resolver(date(year,month,1),db)
+    except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No starting balance found. Create one first.",
+            status_code=status.HTTP_404_NOT_FOUND, detail="No starting balance found. Create one first.",
         )
-
-    if starting_balance.month == date(year, month, 1):
-        actual_starting_cash = starting_balance.cash_balance
-        actual_starting_upi = starting_balance.upi_balance
-    else:
-        last_day_before_requested = date(year, month, 1) - timedelta(days=1)
-
-        calc_transactions = (
-            db.execute(
-                select(Transaction)
-                .where(Transaction.transaction_date >= starting_balance.month)
-                .where(Transaction.transaction_date <= last_day_before_requested)
-            )
-            .scalars()
-            .all()
-        )
-
-        total_cash_net = 0
-        total_upi_net = 0
-
-        for t in calc_transactions:
-            if t.payment_method == "CASH":
-                if is_credit(t):
-                    total_cash_net += t.amount
-                else:
-                    total_cash_net -= t.amount
-            else:
-                if is_credit(t):
-                    total_upi_net += t.amount
-                else:
-                    total_upi_net -= t.amount
-
-        actual_starting_cash = starting_balance.cash_balance + total_cash_net
-        actual_starting_upi = starting_balance.upi_balance + total_upi_net
+    
+    actual_starting_cash = cash_net
+    actual_starting_upi = upi_net
 
     transactions = (
         db.execute(
@@ -194,46 +157,18 @@ def get_yearly_data(
 
     total_income = {"cash": total_cash_income, "upi": total_upi_income}
 
-    december_starting_balance = db.execute(
-        select(StartingBalance).where(StartingBalance.month <= date(year, 12, 1))
-    ).scalar_one_or_none()
-
     final_upi_balance = total_upi_income - total_upi_spending
     final_cash_balance = total_cash_income - total_cash_spending
 
-    if december_starting_balance.month == date(year, 12, 1):
-        final_upi_balance += december_starting_balance.upi_balance
-        final_cash_balance += december_starting_balance.cash_balance
-    else:
-        last_day_before_requested = date(year, month, 1) - timedelta(days=1)
-
-        calc_transactions = (
-            db.execute(
-                select(Transaction)
-                .where(Transaction.transaction_date >= december_starting_balance.month)
-                .where(Transaction.transaction_date <= last_day_before_requested)
-            )
-            .scalars()
-            .all()
+    try:
+        net_balance_change = starting_balance_resolver(date(year,1,1),db)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No starting balance found. Create one first.",
         )
 
-        total_cash_net = 0
-        total_upi_net = 0
-
-        for t in calc_transactions:
-            if t.payment_method == "CASH":
-                if is_credit(t):
-                    total_cash_net += t.amount
-                else:
-                    total_cash_net -= t.amount
-            else:
-                if is_credit(t):
-                    total_upi_net += t.amount
-                else:
-                    total_upi_net -= t.amount
-
-        final_cash_balance += total_cash_net
-        final_upi_balance += total_upi_net
+    final_upi_balance += net_balance_change["upi"]
+    final_cash_balance += net_balance_change["cash"]
 
     final_balance = {"cash": final_cash_balance, "upi": final_upi_balance}
 
@@ -244,3 +179,8 @@ def get_yearly_data(
         "total_income": total_income,
         "final_balance": final_balance,
     }
+
+
+@router.get("/{year}/{month}")
+def get_generate_monthly_report(year: int, month: int, curr_user: User = Depends(get_current_user)):
+    pass
