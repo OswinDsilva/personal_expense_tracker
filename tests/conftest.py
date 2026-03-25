@@ -85,7 +85,7 @@ def seed_starting_balances(db_session):
 
 
 @pytest.fixture(scope="function")
-def seed_transactions(db_session, seed_categories):
+def seed_transactions(db_session, seed_categories,seed_starting_balances):
     t1 = Transaction(
         transaction_date=date(2026, 2, 2),
         description="Grocery shopping",
