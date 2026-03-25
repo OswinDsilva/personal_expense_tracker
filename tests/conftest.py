@@ -76,54 +76,149 @@ def seed_categories(db_session):
 
 @pytest.fixture(scope="function")
 def seed_starting_balances(db_session):
-    sb1 = StartingBalance(month=date(2026, 2, 1), upi_balance=0, cash_balance=0)
-    sb2 = StartingBalance(month=date(2026, 1, 1), upi_balance=0, cash_balance=0)
-    sb3 = StartingBalance(month=date(2025, 12, 1), upi_balance=0, cash_balance=0)
-    db_session.add_all([sb1, sb2, sb3])
+    sb1 = StartingBalance(
+        month=date(2025, 12, 1),
+        cash_balance=5000,
+        upi_balance=15000
+    )
+    sb2 = StartingBalance(
+        month=date(2026, 2, 1),
+        cash_balance=3500,
+        upi_balance=12000
+    )
+    
+    db_session.add_all([sb1, sb2])
     db_session.commit()
-    return [sb1, sb2, sb3]
+    return [sb1, sb2]
 
 
 @pytest.fixture(scope="function")
-def seed_transactions(db_session, seed_categories,seed_starting_balances):
-    t1 = Transaction(
-        transaction_date=date(2026, 2, 2),
-        description="Grocery shopping",
-        amount=50,
-        payment_method="UPI",
-        transaction_type="EXPENSE",
-        category_id=seed_categories[0].id,
-    )
-    t2 = Transaction(
-        transaction_date=date(2026, 2, 24),
-        description="Transfer to cash",
-        amount=100,
-        payment_method="UPI",
-        transaction_type="TRANSFER",
-        is_debit=True,
-    )
-    t3 = Transaction(
-        transaction_date=date(2026, 2, 24),
-        description="Test",
-        amount=100,
-        payment_method="CASH",
-        transaction_type="TRANSFER",
-        is_debit=False,
-    )
-    t4 = Transaction(
-        transaction_date=date(2026, 2, 25),
-        description="Salary payment",
-        amount=5000,
-        payment_method="UPI",
-        transaction_type="INCOME",
-    )
-
-    db_session.add_all([t1, t2, t3, t4])
+def seed_transactions(db_session, seed_categories, seed_starting_balances):
+    jan_txns = [
+        Transaction(
+            transaction_date=date(2026, 1, 5),
+            description="Grocery shopping",
+            amount=250,
+            payment_method="CASH",
+            transaction_type="EXPENSE",
+            category_id=seed_categories[0].id,
+        ),
+        Transaction(
+            transaction_date=date(2026, 1, 10),
+            description="Electricity bill",
+            amount=800,
+            payment_method="UPI",
+            transaction_type="EXPENSE",
+            category_id=seed_categories[1].id,
+        ),
+        Transaction(
+            transaction_date=date(2026, 1, 15),
+            description="Freelance payment",
+            amount=10000,
+            payment_method="UPI",
+            transaction_type="INCOME",
+        ),
+    ]
+    
+    feb_txns = [
+        Transaction(
+            transaction_date=date(2026, 2, 3),
+            description="Coffee",
+            amount=150,
+            payment_method="CASH",
+            transaction_type="EXPENSE",
+            category_id=seed_categories[0].id,
+        ),
+        Transaction(
+            transaction_date=date(2026, 2, 5),
+            description="Restaurant",
+            amount=450,
+            payment_method="UPI",
+            transaction_type="EXPENSE",
+            category_id=seed_categories[0].id,
+        ),
+        Transaction(
+            transaction_date=date(2026, 2, 10),
+            description="Rent payment",
+            amount=8000,
+            payment_method="UPI",
+            transaction_type="EXPENSE",
+            category_id=seed_categories[1].id,
+        ),
+        Transaction(
+            transaction_date=date(2026, 2, 15),
+            description="Salary",
+            amount=50000,
+            payment_method="UPI",
+            transaction_type="INCOME",
+        ),
+        Transaction(
+            transaction_date=date(2026, 2, 18),
+            description="Groceries",
+            amount=1200,
+            payment_method="CASH",
+            transaction_type="EXPENSE",
+            category_id=seed_categories[0].id,
+        ),
+        Transaction(
+            transaction_date=date(2026, 2, 20),
+            description="Transfer to wallet",
+            amount=2000,
+            payment_method="UPI",
+            transaction_type="TRANSFER",
+            is_debit=True,
+        ),
+        Transaction(
+            transaction_date=date(2026, 2, 20),
+            description="Transfer to wallet",
+            amount=2000,
+            payment_method="CASH",
+            transaction_type="TRANSFER",
+            is_debit=False,
+        ),
+        Transaction(
+            transaction_date=date(2026, 2, 25),
+            description="Transport",
+            amount=300,
+            payment_method="CASH",
+            transaction_type="EXPENSE",
+            category_id=seed_categories[1].id,
+        ),
+    ]
+    
+    mar_txns = [
+        Transaction(
+            transaction_date=date(2026, 3, 2),
+            description="Medicine",
+            amount=500,
+            payment_method="CASH",
+            transaction_type="EXPENSE",
+            category_id=seed_categories[1].id,
+        ),
+        Transaction(
+            transaction_date=date(2026, 3, 10),
+            description="Bonus",
+            amount=5000,
+            payment_method="UPI",
+            transaction_type="INCOME",
+        ),
+    ]
+    
+    all_txns = jan_txns + feb_txns + mar_txns
+    db_session.add_all(all_txns)
     db_session.flush()
-
-    t2.linked_transfer_id = t3.id
-    t3.linked_transfer_id = t2.id
-
+    
+    feb_txns[5].linked_transfer_id = feb_txns[6].id
+    feb_txns[6].linked_transfer_id = feb_txns[5].id
+    
     db_session.commit()
-
-    return [t1, t2, t3, t4]
+    
+    for t in all_txns:
+        db_session.refresh(t)
+    
+    return {
+        "jan": jan_txns,
+        "feb": feb_txns,
+        "mar": mar_txns,
+        "all": all_txns
+    }

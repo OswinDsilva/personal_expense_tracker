@@ -1,6 +1,12 @@
 from .auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 from .categories import CategoryRequest, CategoryResponse
-from .reports import BalanceMetaData, DailyMetaData, MonthlyDataResponse
+from .reports import (
+    BalanceMetaData,
+    DailyMetaData,
+    MonthlyDataResponse,
+    MonthlyMetaData,
+    YearlyDataResponse,
+)
 from .starting_balance import StartingBalanceCreate, StartingBalanceResponse, StartingBalanceUpdate
 from .transactions import (
     PaginationMetaData,
@@ -34,4 +40,6 @@ __all__ = [
     "MonthlyDataResponse",
     "BalanceMetaData",
     "DailyMetaData",
+    "YearlyDataResponse",
+    "MonthlyMetaData",
 ]

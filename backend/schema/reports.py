@@ -34,3 +34,20 @@ class MonthlyDataResponse(BaseModel):
     ending_balance: BalanceMetaData
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MonthlyMetaData(BaseModel):
+    month: int
+    total_spending: BalanceMetaData
+    total_income: BalanceMetaData
+    num_txns: int
+
+
+class YearlyDataResponse(BaseModel):
+    year: int
+    monthly_breakdown: List[MonthlyMetaData]
+    total_spending: BalanceMetaData
+    total_income: BalanceMetaData
+    final_balance: BalanceMetaData
+
+    model_config = ConfigDict(from_attributes=True)

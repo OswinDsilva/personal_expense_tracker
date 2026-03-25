@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..auth.jwt import get_current_user
 from ..database import get_db
 from ..models import StartingBalance, Transaction, User
-from ..schema import MonthlyDataResponse
+from ..schema import MonthlyDataResponse, YearlyDataResponse
 from ..utils.reports import is_credit, is_debit
 
 router = APIRouter(prefix="/reports", tags=["reports"])
@@ -22,7 +22,9 @@ def get_monthly_data(
     db: Session = Depends(get_db),
 ):
     if not 1 <= month <= 12:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Month must be between 1 and 12")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Month must be between 1 and 12"
+        )
 
     starting_balance = db.execute(
         select(StartingBalance)
@@ -32,8 +34,11 @@ def get_monthly_data(
     ).scalar_one_or_none()
 
     if not starting_balance:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No starting balance found. Create one first.")
-    
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No starting balance found. Create one first.",
+        )
+
     if starting_balance.month == date(year, month, 1):
         actual_starting_cash = starting_balance.cash_balance
         actual_starting_upi = starting_balance.upi_balance
@@ -59,7 +64,7 @@ def get_monthly_data(
                     total_cash_net += t.amount
                 else:
                     total_cash_net -= t.amount
-            else:  # UPI
+            else:
                 if is_credit(t):
                     total_upi_net += t.amount
                 else:
@@ -129,4 +134,113 @@ def get_monthly_data(
             "cash": ending_cash,
             "upi": ending_upi,
         },
+    }
+
+
+@router.get("/data/{year}", response_model=YearlyDataResponse)
+def get_yearly_data(
+    year: int, db: Session = Depends(get_db), curr_user: User = Depends(get_current_user)
+):
+    monthly_data = {}
+    for month in range(1, 12 + 1):
+        monthly_data[month] = {
+            "month": month,
+            "total_spending": {
+                "cash": 0,
+                "upi": 0,
+            },
+            "total_income": {
+                "cash": 0,
+                "upi": 0,
+            },
+            "num_txns": 0,
+        }
+
+    all_txns = (
+        db.execute(
+            select(Transaction)
+            .where(extract("year", Transaction.transaction_date) == year)
+            .order_by(Transaction.transaction_date)
+        )
+        .scalars()
+        .all()
+    )
+
+    for t in all_txns:
+        monthly_data[t.transaction_date.month]["num_txns"] += 1
+        if is_debit(t):
+            if t.payment_method == "UPI":
+                monthly_data[t.transaction_date.month]["total_spending"]["upi"] += t.amount
+            else:
+                monthly_data[t.transaction_date.month]["total_spending"]["cash"] += t.amount
+        else:
+            if t.payment_method == "UPI":
+                monthly_data[t.transaction_date.month]["total_income"]["upi"] += t.amount
+            else:
+                monthly_data[t.transaction_date.month]["total_income"]["cash"] += t.amount
+
+    total_upi_spending = sum(
+        t.amount for t in all_txns if t.payment_method == "UPI" and is_debit(t)
+    )
+    total_cash_spending = sum(
+        t.amount for t in all_txns if t.payment_method == "CASH" and is_debit(t)
+    )
+    total_upi_income = sum(t.amount for t in all_txns if t.payment_method == "UPI" and is_credit(t))
+    total_cash_income = sum(
+        t.amount for t in all_txns if t.payment_method == "CASH" and is_credit(t)
+    )
+
+    total_spending = {"cash": total_cash_spending, "upi": total_upi_spending}
+
+    total_income = {"cash": total_cash_income, "upi": total_upi_income}
+
+    december_starting_balance = db.execute(
+        select(StartingBalance).where(StartingBalance.month <= date(year, 12, 1))
+    ).scalar_one_or_none()
+
+    final_upi_balance = total_upi_income - total_upi_spending
+    final_cash_balance = total_cash_income - total_cash_spending
+
+    if december_starting_balance.month == date(year, 12, 1):
+        final_upi_balance += december_starting_balance.upi_balance
+        final_cash_balance += december_starting_balance.cash_balance
+    else:
+        last_day_before_requested = date(year, month, 1) - timedelta(days=1)
+
+        calc_transactions = (
+            db.execute(
+                select(Transaction)
+                .where(Transaction.transaction_date >= december_starting_balance.month)
+                .where(Transaction.transaction_date <= last_day_before_requested)
+            )
+            .scalars()
+            .all()
+        )
+
+        total_cash_net = 0
+        total_upi_net = 0
+
+        for t in calc_transactions:
+            if t.payment_method == "CASH":
+                if is_credit(t):
+                    total_cash_net += t.amount
+                else:
+                    total_cash_net -= t.amount
+            else:
+                if is_credit(t):
+                    total_upi_net += t.amount
+                else:
+                    total_upi_net -= t.amount
+
+        final_cash_balance += total_cash_net
+        final_upi_balance += total_upi_net
+
+    final_balance = {"cash": final_cash_balance, "upi": final_upi_balance}
+
+    return {
+        "year": year,
+        "monthly_breakdown": list(monthly_data.values()),
+        "total_spending": total_spending,
+        "total_income": total_income,
+        "final_balance": final_balance,
     }
