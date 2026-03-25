@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from fastapi import status
 
 
+# GET /reports/data/{year}/{month}
 def test_get_monthly_data_success(client, auth_headers, seed_transactions):
     response = client.get("/reports/data/2026/2", headers=auth_headers)
 
@@ -59,3 +60,15 @@ def test_get_monthly_data_no_auth(client,seed_transactions):
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
+# GET /reports/data/{year}
+def test_get_yearly_data_success(client, auth_headers, seed_transactions):
+    response = client.get("reports/data/2026", headers=auth_headers)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert float(response.json()["final_balance"]["cash"]) == 4600
+
+
+def test_get_yearly_data_no_auth(client,seed_transactions):
+    response = client.get("reports/data/2026")
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
