@@ -1,0 +1,361 @@
+@import "tailwindcss";
+
+/* ============================================================
+   KHARCHA — The Obsidian Architect Design System
+   ============================================================ */
+
+:root {
+  /* Surfaces */
+  --surface:              #0e0e0f;
+  --surface-low:          #131314;
+  --surface-hi:           #262627;
+  --surface-highest:      #2c2c2d;
+  --surface-variant:      #262627;
+  --outline-variant:      #484849;
+
+  /* On-Surface */
+  --on-surface:           #ffffff;
+  --on-surface-muted:     #adaaab;
+
+  /* Primary — Neon Mint */
+  --primary:              #b1ffce;
+  --primary-container:    #00ffa3;
+  --primary-dim:          #00ef99;
+  --on-primary:           #00663e;
+
+  /* Secondary — Electric Purple */
+  --secondary:            #d674ff;
+  --secondary-container:  #9900cf;
+  --secondary-dim:        #bb00fc;
+
+  /* Tertiary — Amber Orange */
+  --tertiary:             #ff9249;
+  --tertiary-container:   #ff7b04;
+
+  /* Semantic */
+  --error:                #ff716c;
+
+  /* Typography */
+  --font-display:         'Space Grotesk', sans-serif;
+  --font-body:            'Inter', sans-serif;
+  --font-label:           'Manrope', sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  min-height: 100vh;
+}
+
+body {
+  background-color: var(--surface);
+  color: var(--on-surface);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   SCROLLBAR STYLING
+   ============================================================ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--surface-low); }
+::-webkit-scrollbar-thumb { background: var(--surface-highest); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--on-surface-muted); }
+
+/* ============================================================
+   TYPOGRAPHY SCALE
+   ============================================================ */
+.font-display   { font-family: var(--font-display); }
+.font-body      { font-family: var(--font-body); }
+.font-label     { font-family: var(--font-label); }
+
+.text-display-xl {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+.text-display-lg {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+}
+.text-headline {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.text-title {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+}
+.text-body {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+.text-label {
+  font-family: var(--font-label);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   COLOR UTILITIES
+   ============================================================ */
+.text-primary         { color: var(--primary); }
+.text-primary-dim     { color: var(--primary-dim); }
+.text-secondary       { color: var(--secondary); }
+.text-tertiary        { color: var(--tertiary); }
+.text-muted           { color: var(--on-surface-muted); }
+.text-error           { color: var(--error); }
+
+.bg-surface           { background-color: var(--surface); }
+.bg-surface-low       { background-color: var(--surface-low); }
+.bg-surface-hi        { background-color: var(--surface-hi); }
+.bg-surface-highest   { background-color: var(--surface-highest); }
+.bg-primary           { background-color: var(--primary); }
+
+/* ============================================================
+   GRADIENT UTILITIES
+   ============================================================ */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
+}
+.gradient-secondary {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-container) 100%);
+}
+.gradient-tertiary {
+  background: linear-gradient(135deg, var(--tertiary) 0%, var(--tertiary-container) 100%);
+}
+
+/* ============================================================
+   GLASSMORPHISM
+   ============================================================ */
+.glass {
+  background: rgba(38, 38, 39, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(72, 72, 73, 0.3);
+}
+.glass-sm {
+  background: rgba(38, 38, 39, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ============================================================
+   NEON GLOW UTILITIES
+   ============================================================ */
+.glow-primary {
+  box-shadow: 0 0 24px rgba(177, 255, 206, 0.15), 0 0 8px rgba(177, 255, 206, 0.08);
+}
+.glow-primary-hover:hover {
+  box-shadow: 0 0 32px rgba(177, 255, 206, 0.25), 0 0 12px rgba(177, 255, 206, 0.12);
+}
+.glow-secondary {
+  box-shadow: 0 0 24px rgba(214, 116, 255, 0.15), 0 0 8px rgba(214, 116, 255, 0.08);
+}
+.glow-tertiary {
+  box-shadow: 0 0 24px rgba(255, 146, 73, 0.15), 0 0 8px rgba(255, 146, 73, 0.08);
+}
+
+/* ============================================================
+   INTERACTIVE TRANSITIONS
+   ============================================================ */
+.transition-smooth {
+  transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.transition-slow {
+  transition: all 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* animated gradient text */
+.gradient-text {
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================================
+   COMPONENT: NAV SIDEBAR
+   ============================================================ */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  color: var(--on-surface-muted);
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover {
+  background: var(--surface-hi);
+  color: var(--on-surface);
+}
+.nav-item.active {
+  background: rgba(177, 255, 206, 0.1);
+  color: var(--primary);
+}
+.nav-item.active svg {
+  filter: drop-shadow(0 0 6px rgba(177, 255, 206, 0.5));
+}
+
+/* ============================================================
+   COMPONENT: METRIC CARD
+   ============================================================ */
+.metric-card {
+  background: var(--surface-low);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.metric-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(72, 72, 73, 0.3);
+  pointer-events: none;
+}
+.metric-card:hover {
+  background: var(--surface-hi);
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+   COMPONENT: TRANSACTION ROW
+   ============================================================ */
+.transaction-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.transaction-row:hover {
+  background: var(--surface-hi);
+}
+.transaction-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+}
+
+/* ============================================================
+   COMPONENT: BUTTONS
+   ============================================================ */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.5rem;
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
+  color: var(--on-primary);
+  transition: all 0.2s ease;
+}
+.btn-primary:hover {
+  box-shadow: 0 0 20px rgba(0, 255, 163, 0.3);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-family: var(--font-label);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  background: var(--surface-hi);
+  color: var(--on-surface-muted);
+  transition: all 0.2s ease;
+}
+.btn-ghost:hover {
+  background: var(--surface-highest);
+  color: var(--on-surface);
+}
+
+/* ============================================================
+   RECHARTS OVERRIDES
+   ============================================================ */
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+.custom-tooltip {
+  background: var(--surface-hi);
+  border: 1px solid rgba(72, 72, 73, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  font-family: var(--font-label);
+  font-size: 0.6875rem;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(177, 255, 206, 0.2); }
+  50%       { box-shadow: 0 0 20px rgba(177, 255, 206, 0.4); }
+}
+.animate-fade-up {
+  animation: fadeSlideUp 0.4s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+.animate-pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}

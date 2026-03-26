@@ -1,7 +1,7 @@
-# Personal Expense Tracker API
+# Personal Expense Tracker
 
 <p align="center">
-	<b>A backend-first personal expense tracker with JWT auth, category management, starting balances, transactions, and monthly reporting.</b>
+	<b>A full-stack personal finance tracker — FastAPI backend with a premium dark-mode React dashboard (Kharcha).</b>
 </p>
 
 <p align="center">
@@ -10,6 +10,9 @@
 	<img src="https://img.shields.io/badge/SQLAlchemy-2.0+-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy" />
 	<img src="https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
 	<img src="https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT" />
+	<img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React" />
+	<img src="https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+	<img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
 </p>
 
 ---
@@ -63,7 +66,7 @@ The backend is built with FastAPI, SQLAlchemy, and PostgreSQL, and includes pyte
 
 ```text
 personal_expense_tracker/
-|- backend/
+|- backend/             ← FastAPI application
 |  |- auth/
 |  |- models/
 |  |- routers/
@@ -74,7 +77,17 @@ personal_expense_tracker/
 |  |- database.py
 |  |- init_db.py
 |  `- main.py
-|- documentation/
+|- frontend/            ← React + Vite dashboard (Kharcha)
+|  |- src/
+|  |  |- components/   ← Sidebar, MetricCard, Charts, TransactionList
+|  |  |- data/         ← Mock data (replace with API calls)
+|  |  |- lib/          ← Utility helpers
+|  |  |- views/        ← Dashboard, Transactions, Reports, Analytics
+|  |  |- App.jsx
+|  |  `- index.css     ← Obsidian Architect design system tokens
+|  |- index.html
+|  `- package.json
+|- documentation/       ← design.md, backend-requirements.md, API docs
 |- sql/
 |- tests/
 |- pyproject.toml
@@ -154,6 +167,58 @@ Open:
 
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
+
+---
+
+## Frontend Setup (Kharcha Dashboard)
+
+The frontend is a React + Vite application implementing the **Obsidian Architect** dark-mode design system based on the Stitch `Kharcha Dashboard` project.
+
+### Prerequisites
+
+- Node.js 18+ and npm
+
+### 1. Install dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+> **Note:** Tailwind CSS v4, PostCSS, Autoprefixer, Recharts, Lucide React, clsx, and tailwind-merge are all listed in `package.json` and will be installed automatically.
+
+### 2. Start development server
+
+```bash
+npm run dev
+```
+
+The dashboard will be available at `http://localhost:5173`.
+
+### 3. Pages
+
+| Page | Route | Description |
+|---|---|---|
+| Dashboard | (default) | Balance overview, 6-month trend chart, recent transactions |
+| Transactions | Sidebar → Transactions | Filterable, searchable full transaction list |
+| Reports | Sidebar → Reports | Financial Excel-style data grid with summary metrics |
+| Analytics | Sidebar → Analytics | Category donut chart, bar chart, and detailed spend cards |
+
+### 4. Mock Data
+
+The frontend currently uses **mock data** from `src/data/mockData.js`. To connect to the live backend, replace the mock values with `fetch()` calls to the API endpoints documented in [`documentation/backend-requirements.md`](documentation/backend-requirements.md).
+
+### 5. Design System
+
+All design tokens (colors, typography, glassmorphism, animations) are defined in `src/index.css`. The system follows the **Obsidian Architect** specification — see [`documentation/design.md`](documentation/design.md) for the full reference.
+
+### 6. Build for production
+
+```bash
+npm run build
+```
+
+Output is written to `frontend/dist/`.
 
 ---
 
@@ -301,14 +366,15 @@ Additional docs are available in:
 ## Current Scope and Next Work
 
 - `backend/routers/analytics.py` and `backend/routers/exports.py` currently exist as placeholders.
-- `frontend/` is present but not yet implemented.
+- The frontend is implemented with mock data; API integration is pending.
 
 Potential next additions:
 
-1. Analytics endpoints (category trend, payment-method trend, period comparisons)
-2. Export endpoints (CSV/XLSX/PDF)
-3. Frontend dashboard integration
-4. Role-based authorization checks beyond authentication
+1. Wire frontend to live backend API endpoints (see `documentation/backend-requirements.md`)
+2. Analytics endpoints (category trend, payment-method trend, period comparisons)
+3. Export endpoints (CSV/XLSX/PDF)
+4. Add transaction create/edit modal to the frontend
+5. Role-based authorization checks beyond authentication
 
 ---
 
