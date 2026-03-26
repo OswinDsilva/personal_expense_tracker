@@ -35,7 +35,7 @@ def test_get_monthly_data_invalid_month_fail(client, auth_headers, seed_transact
 
 def test_get_monthly_data_future_month_success(client, auth_headers, seed_transactions):
     test = date.today() + timedelta(days=31)
-    
+
     response = client.get(f"reports/data/{test.year}/{test.month}", headers=auth_headers)
 
     assert response.status_code == status.HTTP_200_OK
@@ -54,7 +54,7 @@ def test_get_monthly_data_calculations_no_propogation(client, auth_headers, seed
     assert float(response.json()["ending_balance"]["upi"]) == 51550.00
 
 
-def test_get_monthly_data_no_auth(client,seed_transactions):
+def test_get_monthly_data_no_auth(client, seed_transactions):
     response = client.get("/reports/data/2026/2")
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -68,7 +68,26 @@ def test_get_yearly_data_success(client, auth_headers, seed_transactions):
     assert float(response.json()["final_balance"]["cash"]) == 4600
 
 
-def test_get_yearly_data_no_auth(client,seed_transactions):
+def test_get_yearly_data_no_auth(client, seed_transactions):
     response = client.get("reports/data/2026")
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+# GET /reports/exports/{year}/{month}
+def test_get_report_success(client, auth_headers, seed_transactions):
+    response = client.get("reports/exports/2026/2", headers=auth_headers)
+
+    assert response.status_code == status.HTTP_200_OK
+    assert (
+        response.headers["content-type"]
+        == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    assert "attachment" in response.headers["content-disposition"]
+    assert len(response.content) > 0
+
+
+def test_get_report_no_auth(client, seed_transactions):
+    response = client.get("reports/exports/2026/2")
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
