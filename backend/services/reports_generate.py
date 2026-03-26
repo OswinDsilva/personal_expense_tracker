@@ -1,8 +1,7 @@
-from io import BytesIO
-
 from xlsxwriter import Workbook
 
 from ..utils import map_month
+
 
 def add_monthly_sheet(workbook: Workbook, data: dict, month_name: str):
     worksheet = workbook.add_worksheet()

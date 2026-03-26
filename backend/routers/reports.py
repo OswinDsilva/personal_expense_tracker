@@ -36,7 +36,7 @@ def get_monthly_data(
             )
         else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, details="Starting balances not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Starting balances not found"
             )
 
 
@@ -48,7 +48,7 @@ def get_yearly_data(
         return get_yearly_data_logic(year, db)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, details="Starting balances not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Starting balances not found"
         )
 
 
@@ -86,7 +86,7 @@ def get_generate_monthly_report(
     db: Session = Depends(get_db),
 ):
     if not 1 <= month <= 12:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, details="Invalid month value")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid month value")
 
     data = get_monthly_data_logic(year, month, db)
 

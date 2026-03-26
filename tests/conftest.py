@@ -86,7 +86,6 @@ def seed_starting_balances(db_session):
         cash_balance=3500,
         upi_balance=12000
     )
-    
     db_session.add_all([sb1, sb2])
     db_session.commit()
     return [sb1, sb2]
