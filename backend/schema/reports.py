@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import List
 
@@ -49,5 +49,37 @@ class YearlyDataResponse(BaseModel):
     total_spending: BalanceMetaData
     total_income: BalanceMetaData
     final_balance: BalanceMetaData
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MergeMetaData(BaseModel):
+    r1: int = Field(ge=0)
+    c1: int = Field(ge=0)
+    r2: int = Field(ge=0)
+    c2: int = Field(ge=0)
+    label: str
+
+
+GridCell = str | int | float | Decimal | date | None
+
+
+class PreviewCellTypes(BaseModel):
+    date_columns: List[int] = Field(default_factory=list)
+    numeric_columns: List[int] = Field(default_factory=list)
+
+
+class PreviewMetaData(BaseModel):
+    year: int
+    month: int | None = None
+    generated_at: datetime
+
+
+class PreviewResponse(BaseModel):
+    sheet_title: str
+    grid: List[List[GridCell]]
+    merges: List[MergeMetaData] = Field(default_factory=list)
+    cell_types: PreviewCellTypes
+    meta: PreviewMetaData
 
     model_config = ConfigDict(from_attributes=True)
