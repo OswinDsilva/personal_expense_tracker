@@ -12,50 +12,34 @@ const bottomItems = [
   { id: 'logout', label: 'Logout', icon: LogOut },
 ];
 
-export default function Sidebar({ activeView, onNavigate }) {
+export default function Sidebar({
+  activeView,
+  onNavigate,
+  onOpenAddModal,
+  onOpenStartingBalanceModal,
+  onOpenCategoryModal,
+  onLogout,
+  currentUser,
+}) {
   return (
-    <aside
-      style={{
-        width: '220px',
-        minWidth: '220px',
-        background: 'var(--surface-low)',
-        borderRight: '1px solid rgba(72,72,73,0.3)',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '1.5rem 1rem',
-        height: '100vh',
-        position: 'sticky',
-        top: 0,
-      }}
-    >
+    <aside className="app-sidebar">
       {/* Brand */}
-      <div style={{ marginBottom: '2.5rem', paddingLeft: '0.5rem' }}>
-        <div
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '1.5rem',
-            fontWeight: 700,
-            background: 'linear-gradient(135deg, var(--primary), var(--primary-container))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
-          Kharcha
-        </div>
+      <div className="sidebar-brand-block">
+        <div className="sidebar-brand">Obsidian</div>
         <div className="text-label text-muted" style={{ marginTop: '0.125rem' }}>
-          Finance Command Center
+          {currentUser?.username ? `@${currentUser.username}` : 'Premium Finance'}
         </div>
       </div>
 
       {/* Main navigation */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+      <nav className="sidebar-main-nav">
         {navItems.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             id={`nav-${id}`}
             className={`nav-item${activeView === id ? ' active' : ''}`}
             onClick={() => onNavigate(id)}
+            type="button"
           >
             <Icon size={16} strokeWidth={1.8} />
             {label}
@@ -63,14 +47,43 @@ export default function Sidebar({ activeView, onNavigate }) {
         ))}
       </nav>
 
+      <div className="sidebar-action-wrap">
+        <button
+          type="button"
+          className="btn-ghost sidebar-add-btn"
+          onClick={onOpenCategoryModal}
+        >
+          Add Category
+        </button>
+        <button
+          type="button"
+          className="btn-ghost sidebar-add-btn"
+          onClick={onOpenStartingBalanceModal}
+        >
+          Add Starting Balance
+        </button>
+        <button
+          type="button"
+          className="btn-primary sidebar-add-btn"
+          onClick={onOpenAddModal}
+        >
+          Add Transaction
+        </button>
+      </div>
+
       {/* Bottom actions */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+      <nav className="sidebar-bottom-nav">
         {bottomItems.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             id={`nav-${id}`}
             className="nav-item"
-            onClick={() => {}}
+            type="button"
+            onClick={() => {
+              if (id === 'logout') {
+                onLogout?.();
+              }
+            }}
           >
             <Icon size={16} strokeWidth={1.8} />
             {label}

@@ -1,169 +1,288 @@
-import { formatINR } from '../data/mockData';
-import { reportRows } from '../data/mockData';
-import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  ChevronDown,
+  Lock,
+  Download,
+} from 'lucide-react';
+import { getPreviewMonthly, getPreviewYearly, downloadMonthlyExport, downloadYearlyExport, downloadFullYearExport } from '../lib/api';
+
+const PERIODS = ['Monthly', 'Yearly'];
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const CURRENT_YEAR = 2026;
+const YEARS_AVAILABLE = [2026, 2025, 2024];
+
+const formatDetailedCurrency = (value) => {
+  if (value === null || value === undefined) return '';
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
 
 export default function ReportsView() {
-  const totalIncome  = reportRows.filter(r => r.type === 'credit').reduce((s, r) => s + r.amount, 0);
-  const totalExpense = reportRows.filter(r => r.type === 'debit').reduce((s, r) => s + r.amount, 0);
-  const netFlow = totalIncome - totalExpense;
+  const [period, setPeriod] = useState('Monthly');
+  const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
+  const [selectedMonth, setSelectedMonth] = useState(3); // March
+  const [previewData, setPreviewData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Generate list of available months (only past months for current year)
+  const getAvailableMonths = () => {
+    const months = [];
+    const maxMonth = selectedYear === CURRENT_YEAR ? new Date().getMonth() + 1 : 12;
+    for (let i = 1; i <= maxMonth; i++) {
+      months.push({ value: i, label: MONTH_NAMES[i - 1] });
+    }
+    return months;
+  };
+
+  // Fetch preview data when period, year, or month changes
+  useEffect(() => {
+    const loadPreview = async () => {
+      setIsLoading(true);
+      setErrorMessage('');
+      try {
+        const data = period === 'Monthly'
+          ? await getPreviewMonthly(selectedYear, selectedMonth)
+          : await getPreviewYearly(selectedYear);
+        setPreviewData(data);
+      } catch (error) {
+        setErrorMessage(error.message || 'Failed to load report');
+        setPreviewData(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPreview();
+  }, [period, selectedYear, selectedMonth]);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      if (period === 'Monthly') {
+        await downloadMonthlyExport(selectedYear, selectedMonth);
+      } else {
+        await downloadYearlyExport(selectedYear);
+      }
+    } catch (error) {
+      setErrorMessage(error.message || 'Failed to export report');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleFullYearExport = async () => {
+    setIsExporting(true);
+    try {
+      await downloadFullYearExport(selectedYear);
+    } catch (error) {
+      setErrorMessage(error.message || 'Failed to export full year report');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Helper function to check if a cell is part of a merged group
+  const isMergedCell = (rowIdx, colIdx) => {
+    if (!previewData?.merges) return null;
+    return previewData.merges.find(
+      (merge) => rowIdx > merge.r1 && rowIdx <= merge.r2 && colIdx >= merge.c1 && colIdx <= merge.c2
+    );
+  };
+
+  // Helper function to check if a cell is the header of a merged group
+  const isMergeStart = (rowIdx, colIdx) => {
+    if (!previewData?.merges) return false;
+    return previewData.merges.find(
+      (merge) => rowIdx === merge.r1 && colIdx === merge.c1
+    );
+  };
+
+  const getMergeColspan = (rowIdx, colIdx) => {
+    const merge = previewData?.merges?.find(
+      (m) => rowIdx === m.r1 && colIdx === m.c1
+    );
+    return merge ? merge.c2 - merge.c1 + 1 : 1;
+  };
+
+  const formatCellValue = (value, rowIdx, colIdx) => {
+    if (value === null || value === undefined) return '';
+    // Check if this column is numeric
+    if (previewData?.cell_types?.numeric_columns?.includes(colIdx) && typeof value === 'number') {
+      return formatDetailedCurrency(value);
+    }
+    return String(value);
+  };
+
+  const availableMonths = getAvailableMonths();
 
   return (
-    <div className="animate-fade-up" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-      {/* Header */}
-      <div>
-        <div className="text-label text-muted">Financial Grid</div>
-        <h1
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '2rem',
-            fontWeight: 700,
-            letterSpacing: '-0.5px',
-            margin: '0.25rem 0 0',
-          }}
-        >
-          Reports
-        </h1>
-      </div>
+    <div className="view-shell reports-v2-shell animate-fade-up">
+      <header className="reports-v2-header">
+        <div>
+          <h1 className="reports-v2-title">Reports</h1>
+          <p className="reports-v2-subtitle">Surgical analysis of your capital allocation.</p>
+        </div>
 
-      {/* Summary Row */}
-      <div style={{ display: 'flex', gap: '1rem' }}>
-        {[
-          { label: 'Total Income', value: totalIncome, color: 'primary', icon: <ArrowDownLeft size={14} /> },
-          { label: 'Total Expense', value: totalExpense, color: 'error', icon: <ArrowUpRight size={14} /> },
-          { label: 'Net Flow', value: netFlow, color: netFlow >= 0 ? 'primary' : 'error', icon: null },
-        ].map(({ label, value, color, icon }) => (
-          <div
-            key={label}
-            className="metric-card"
-            style={{ flex: 1, padding: '1.25rem' }}
-          >
-            <div className="text-label text-muted" style={{ marginBottom: '0.5rem' }}>{label}</div>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                color: `var(--${color})`,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.375rem',
-              }}
+        <div className="reports-v2-period-switch" role="tablist" aria-label="Report period">
+          {PERIODS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={`reports-v2-switch-btn${period === item ? ' active' : ''}`}
+              onClick={() => setPeriod(item)}
             >
-              {icon}{formatINR(Math.abs(value))}
-            </div>
-          </div>
-        ))}
-      </div>
+              {item}
+            </button>
+          ))}
+        </div>
 
-      {/* Data Grid */}
-      <div className="metric-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: 'var(--surface-hi)' }}>
-              {['Date', 'Description', 'Category', 'Amount', 'Type', 'Balance'].map(h => (
-                <th
-                  key={h}
-                  style={{
-                    padding: '0.875rem 1rem',
-                    textAlign: h === 'Amount' || h === 'Balance' ? 'right' : 'left',
-                    fontFamily: 'var(--font-label)',
-                    fontSize: '0.6875rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: 'var(--on-surface-muted)',
-                  }}
-                >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {reportRows.map((row, i) => (
-              <tr
-                key={i}
-                id={`report-row-${i}`}
-                style={{
-                  background: i % 2 === 0 ? 'var(--surface)' : 'var(--surface-low)',
-                  transition: 'background 0.15s ease',
-                  cursor: 'default',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hi)'}
-                onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--surface)' : 'var(--surface-low)'}
+        <button
+          type="button"
+          className="reports-v2-export-btn"
+          onClick={handleFullYearExport}
+          disabled={isExporting}
+          title={`Export full year ${selectedYear} report`}
+        >
+          <Download size={16} />
+          Export Full Year
+        </button>
+      </header>
+
+      <section className="reports-v2-filters" aria-label="Report filters">
+        {period === 'Monthly' && (
+          <label className="reports-v2-filter-group">
+            <span className="reports-v2-filter-label">Period Month</span>
+            <div className="reports-v2-select-wrap">
+              <select
+                value={selectedMonth}
+                onChange={(event) => setSelectedMonth(parseInt(event.target.value, 10))}
+                className="reports-v2-select"
               >
-                <td style={{ padding: '0.75rem 1rem', fontFamily: 'var(--font-label)', fontSize: '0.6875rem', color: 'var(--on-surface-muted)' }}>
-                  {new Date(row.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                </td>
-                <td style={{ padding: '0.75rem 1rem', fontFamily: 'var(--font-body)', fontSize: '0.875rem', color: 'var(--on-surface)' }}>
-                  {row.description}
-                </td>
-                <td style={{ padding: '0.75rem 1rem' }}>
-                  <span
-                    style={{
-                      background: 'var(--surface-hi)',
-                      border: '1px solid rgba(72,72,73,0.3)',
-                      borderRadius: '0.375rem',
-                      padding: '0.1875rem 0.5rem',
-                      fontFamily: 'var(--font-label)',
-                      fontSize: '0.625rem',
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      color: 'var(--on-surface-muted)',
-                    }}
-                  >
-                    {row.category}
-                  </span>
-                </td>
-                <td
-                  style={{
-                    padding: '0.75rem 1rem',
-                    textAlign: 'right',
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '0.9375rem',
-                    fontWeight: 600,
-                    color: row.type === 'credit' ? 'var(--primary)' : 'var(--on-surface)',
-                  }}
-                >
-                  {row.type === 'credit' ? '+' : '−'} {formatINR(row.amount)}
-                </td>
-                <td style={{ padding: '0.75rem 1rem' }}>
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      background: row.type === 'credit' ? 'rgba(177,255,206,0.08)' : 'rgba(255,113,108,0.08)',
-                      border: `1px solid ${row.type === 'credit' ? 'rgba(177,255,206,0.2)' : 'rgba(255,113,108,0.2)'}`,
-                      borderRadius: '0.375rem',
-                      padding: '0.1875rem 0.5rem',
-                      fontFamily: 'var(--font-label)',
-                      fontSize: '0.625rem',
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      color: row.type === 'credit' ? 'var(--primary)' : 'var(--error)',
-                    }}
-                  >
-                    {row.type === 'credit' ? <ArrowDownLeft size={9} /> : <ArrowUpRight size={9} />}
-                    {row.type === 'credit' ? 'Income' : 'Debit'}
-                  </span>
-                </td>
-                <td
-                  style={{
-                    padding: '0.75rem 1rem',
-                    textAlign: 'right',
-                    fontFamily: 'var(--font-label)',
-                    fontSize: '0.6875rem',
-                    color: 'var(--on-surface-muted)',
-                  }}
-                >
-                  {formatINR(row.balance)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                {availableMonths.map((item) => (
+                  <option key={item.value} value={item.value}>{item.label}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="reports-v2-select-icon" />
+            </div>
+          </label>
+        )}
+
+        <label className="reports-v2-filter-group">
+          <span className="reports-v2-filter-label">Fiscal Year</span>
+          <div className="reports-v2-select-wrap">
+            <select
+              value={selectedYear}
+              onChange={(event) => setSelectedYear(parseInt(event.target.value, 10))}
+              className="reports-v2-select"
+            >
+              {YEARS_AVAILABLE.map((year) => (
+                <option key={year} value={year}>FY {year}-{year + 1}</option>
+              ))}
+            </select>
+            <ChevronDown size={16} className="reports-v2-select-icon" />
+          </div>
+        </label>
+
+        <div className="reports-v2-filter-group reports-v2-filter-disabled" aria-disabled="true">
+          <span className="reports-v2-filter-label">Sub-Category</span>
+          <div className="reports-v2-disabled-input">
+            <Lock size={13} />
+            <span>All Categories</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="reports-v2-ledger-shell" aria-label="Statement ledger">
+        <div className="reports-v2-ledger-head">
+          <div className="reports-v2-ledger-title-wrap">
+            <span className="reports-v2-ledger-stripe" aria-hidden="true" />
+            <h2 className="reports-v2-ledger-title">Statement Ledger</h2>
+          </div>
+
+          <button
+            type="button"
+            className="reports-v2-export-btn"
+            onClick={handleExport}
+            disabled={isLoading || isExporting || !previewData}
+          >
+            <Download size={16} />
+            {isExporting ? 'Exporting...' : 'Export Report'}
+          </button>
+        </div>
+
+        {errorMessage && (
+          <div className="error-message" style={{ padding: '12px', marginBottom: '12px', color: '#dc2626' }}>
+            {errorMessage}
+          </div>
+        )}
+
+        {isLoading ? (
+          <div style={{ padding: '48px', textAlign: 'center', color: '#666' }}>
+            Loading report preview...
+          </div>
+        ) : previewData?.grid ? (
+          <div className="reports-v2-grid-scroll">
+            <table className="reports-v2-table">
+              <thead>
+                <tr className="reports-v2-grid-letters">
+                  <th className="reports-v2-index-corner" />
+                  {previewData.grid[0]?.map((_, idx) => (
+                    <th key={idx}>{String.fromCharCode(65 + idx)}</th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {previewData.grid.map((row, rowIdx) => (
+                  <tr key={rowIdx} className="reports-v2-row">
+                    <td className="reports-v2-row-index">{rowIdx + 1}</td>
+                    {row.map((cell, colIdx) => {
+                      const merge = isMergedCell(rowIdx, colIdx);
+                      const isStart = isMergeStart(rowIdx, colIdx);
+
+                      // Skip if this is a merged cell (not the starting cell)
+                      if (merge && !isStart) {
+                        return null;
+                      }
+
+                      const colspan = getMergeColspan(rowIdx, colIdx);
+                      const formattedValue = formatCellValue(cell, rowIdx, colIdx);
+                      const isNumeric = previewData?.cell_types?.numeric_columns?.includes(colIdx);
+
+                      return (
+                        <td
+                          key={colIdx}
+                          colSpan={colspan}
+                          className={`${isNumeric ? 'amount-cell' : ''}`}
+                          style={{
+                            textAlign: isNumeric ? 'right' : 'left',
+                          }}
+                        >
+                          {formattedValue}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div style={{ padding: '48px', textAlign: 'center', color: '#999' }}>
+            No data available for this period
+          </div>
+        )}
+
+        <footer className="reports-v2-footer">
+          <p>Report for {period === 'Monthly' ? `${MONTH_NAMES[selectedMonth - 1]} ${selectedYear}` : selectedYear}</p>
+        </footer>
+      </section>
     </div>
   );
 }
