@@ -18,7 +18,7 @@ app.include_router(reports.router)
 
 
 origins = [
-    "https://personal-expense-tracker-self-mu.vercel.app/"
+    "https://personal-expense-tracker-self-mu.vercel.app",
     "http://localhost",
     "http://localhost:8080",
     "http://localhost:5173",
