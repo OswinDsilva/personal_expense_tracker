@@ -10,6 +10,8 @@ import TransactionsView from './views/TransactionsView';
 import ReportsView from './views/ReportsView';
 import AnalyticsView from './views/AnalyticsView';
 import LoginView from './views/LoginView';
+import LoadingSpinner from './components/LoadingSpinner';
+import { useHealthCheck } from './hooks/useHealthCheck';
 
 const VIEWS = {
   dashboard: DashboardView,
@@ -26,6 +28,7 @@ const MOBILE_NAV_ITEMS = [
 ];
 
 export default function App() {
+  const isHealthy = useHealthCheck();
   const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(localStorage.getItem('access_token')));
   const [currentUser, setCurrentUser] = useState(() => {
     try {
@@ -62,6 +65,10 @@ export default function App() {
     setIsStartingBalanceModalOpen(false);
     setIsCategoryModalOpen(false);
   };
+
+  if (!isHealthy) {
+    return <LoadingSpinner />;
+  }
 
   if (!isAuthenticated) {
     return <LoginView onLoginSuccess={handleLoginSuccess} />;

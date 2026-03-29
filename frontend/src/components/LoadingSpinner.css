@@ -1,0 +1,66 @@
+.loading-spinner-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-hi) 100%);
+  z-index: 9999;
+}
+
+.spinner-text-with-dots {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spinner-text {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--on-surface);
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.spinner-dots {
+  display: flex;
+  gap: 0.5rem;
+  height: 1rem;
+  align-items: center;
+}
+
+.spinner-dots .dot {
+  width: 10px;
+  height: 10px;
+  background-color: var(--primary);
+  border-radius: 50%;
+  animation: wave 1.4s ease-in-out infinite;
+}
+
+.spinner-dots .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.spinner-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.spinner-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-15px);
+    opacity: 0.6;
+  }
+}

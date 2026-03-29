@@ -33,3 +33,8 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "Website running"}
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
