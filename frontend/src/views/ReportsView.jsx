@@ -10,6 +10,36 @@ const PERIODS = ['Monthly', 'Yearly'];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const CURRENT_YEAR = 2026;
 const YEARS_AVAILABLE = [2026, 2025, 2024];
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+
+const isNoDataPreviewError = (message) => {
+  if (!message) return false;
+  const normalized = String(message).toLowerCase();
+  return (
+    normalized.includes('starting balance')
+    || normalized.includes('starting balances not found')
+    || normalized.includes('no starting balance')
+  );
+};
+
+const isNetworkFetchError = (message) => {
+  if (!message) return false;
+  const normalized = String(message).toLowerCase();
+  return (
+    normalized.includes('networkerror when attempting to fetch resource')
+    || normalized.includes('failed to fetch')
+    || normalized.includes('load failed')
+  );
+};
+
+const isApiUnavailable = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`);
+    return !response.ok;
+  } catch {
+    return true;
+  }
+};
 
 const formatDetailedCurrency = (value) => {
   if (value === null || value === undefined) return '';
@@ -51,7 +81,26 @@ export default function ReportsView() {
           : await getPreviewYearly(selectedYear);
         setPreviewData(data);
       } catch (error) {
-        setErrorMessage(error.message || 'Failed to load report');
+        const message = error?.message || 'Failed to load report';
+
+        // Missing starting balance means there is no period data to preview yet.
+        if (isNoDataPreviewError(message)) {
+          setErrorMessage('');
+          setPreviewData(null);
+          return;
+        }
+
+        // Only show network fetch errors when the API is truly unreachable.
+        if (isNetworkFetchError(message)) {
+          const unavailable = await isApiUnavailable();
+          if (!unavailable) {
+            setErrorMessage('');
+            setPreviewData(null);
+            return;
+          }
+        }
+
+        setErrorMessage(message);
         setPreviewData(null);
       } finally {
         setIsLoading(false);
