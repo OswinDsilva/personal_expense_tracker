@@ -10,13 +10,6 @@ app = FastAPI(
     redoc_url="/redoc" if ENVIRONMENT == "dev" else None,
 )
 
-app.include_router(auth.router)
-app.include_router(categories.router)
-app.include_router(starting_balances.router)
-app.include_router(transactions.router)
-app.include_router(reports.router)
-
-
 origins = [
     "https://personal-expense-tracker-self-mu.vercel.app",
     "http://localhost",
@@ -34,6 +27,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
+app.include_router(categories.router)
+app.include_router(starting_balances.router)
+app.include_router(transactions.router)
+app.include_router(reports.router)
 
 
 @app.get("/")
