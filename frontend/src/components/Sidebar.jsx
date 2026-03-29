@@ -25,8 +25,7 @@ export default function Sidebar({
     <aside className="app-sidebar">
       {/* Brand */}
       <div className="sidebar-brand-block">
-        <div className="sidebar-brand">Obsidian</div>
-        <div className="text-label text-muted" style={{ marginTop: '0.125rem' }}>
+        <div className="text-label text-muted">
           {currentUser?.username ? `@${currentUser.username}` : 'Premium Finance'}
         </div>
       </div>

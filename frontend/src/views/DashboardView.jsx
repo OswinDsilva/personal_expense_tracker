@@ -144,7 +144,7 @@ export default function DashboardView({ onNavigate, transactionsRefreshTick }) {
       {/* Page Header */}
       <div className="view-header">
         <div>
-          <div className="text-label text-muted">Kharcha Overview</div>
+          <div className="text-label text-muted">Overview</div>
           <h1 className="view-title" style={{ margin: '0.25rem 0 0', color: 'var(--on-surface)' }}>
             {summaryData.month}
           </h1>

@@ -45,14 +45,7 @@ export default function LoginView({ onLoginSuccess }) {
 
   return (
     <div className="login-shell">
-      <div className="login-watermark" aria-hidden="true">KHARCHA</div>
-
       <main className="login-main">
-        <div className="login-branding">
-          <h1 className="login-brand">Obsidian</h1>
-          <p className="login-tagline">Architectural Wealth Intelligence</p>
-        </div>
-
         <section className="login-card" aria-label="Sign in panel">
           <header className="login-card-header">
             <h2>{mode === 'login' ? 'Welcome Back' : 'Create Account'}</h2>
