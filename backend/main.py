@@ -1,9 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .config import ENVIRONMENT
 from .routers import auth, categories, reports, starting_balances, transactions
 
-app = FastAPI(title="Expense Tracker API")
+app = FastAPI(
+    title="Expense Tracker API",
+    docs_url="/docs" if ENVIRONMENT == "dev" else None,
+    redoc_url="/redoc" if ENVIRONMENT == "dev" else None,
+)
 
 app.include_router(auth.router)
 app.include_router(categories.router)
