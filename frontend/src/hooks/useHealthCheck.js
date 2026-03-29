@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+
 export const useHealthCheck = () => {
   const [isHealthy, setIsHealthy] = useState(false);
 
@@ -10,7 +12,7 @@ export const useHealthCheck = () => {
 
     const checkHealth = async () => {
       try {
-        const response = await fetch('/api/health');
+        const response = await fetch(`${API_BASE_URL}/api/health`);
         if (response.ok) {
           setIsHealthy(true);
         }
