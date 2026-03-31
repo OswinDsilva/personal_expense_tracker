@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { LayoutDashboard, ReceiptText, BarChart2, TrendingUp } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { LayoutDashboard, ReceiptText, BarChart2, TrendingUp, Plus } from 'lucide-react';
 import './index.css';
 import Sidebar from './components/Sidebar';
 import AddTransactionModal from './components/AddTransactionModal';
@@ -42,8 +42,10 @@ export default function App() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isStartingBalanceModalOpen, setIsStartingBalanceModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isMobileAddMenuOpen, setIsMobileAddMenuOpen] = useState(false);
   const [transactionsRefreshTick, setTransactionsRefreshTick] = useState(0);
   const [categoriesRefreshTick, setCategoriesRefreshTick] = useState(0);
+  const mobileActionsRef = useRef(null);
   const ActiveView = VIEWS[activeView] ?? DashboardView;
 
   const handleLoginSuccess = (user) => {
@@ -64,7 +66,49 @@ export default function App() {
     setIsAddModalOpen(false);
     setIsStartingBalanceModalOpen(false);
     setIsCategoryModalOpen(false);
+    setIsMobileAddMenuOpen(false);
   };
+
+  const openTransactionModal = () => {
+    setIsAddModalOpen(true);
+    setIsMobileAddMenuOpen(false);
+  };
+
+  const openStartingBalanceModal = () => {
+    setIsStartingBalanceModalOpen(true);
+    setIsMobileAddMenuOpen(false);
+  };
+
+  const openCategoryModal = () => {
+    setIsCategoryModalOpen(true);
+    setIsMobileAddMenuOpen(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mobileActionsRef.current && !mobileActionsRef.current.contains(event.target)) {
+        setIsMobileAddMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsMobileAddMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsMobileAddMenuOpen(false);
+  }, [activeView]);
 
   if (!isHealthy) {
     return <LoadingSpinner />;
@@ -82,14 +126,50 @@ export default function App() {
       <Sidebar
         activeView={activeView}
         onNavigate={setActiveView}
-        onOpenAddModal={() => setIsAddModalOpen(true)}
-        onOpenStartingBalanceModal={() => setIsStartingBalanceModalOpen(true)}
-        onOpenCategoryModal={() => setIsCategoryModalOpen(true)}
+        onOpenAddModal={openTransactionModal}
+        onOpenStartingBalanceModal={openStartingBalanceModal}
+        onOpenCategoryModal={openCategoryModal}
         onLogout={handleLogout}
         currentUser={currentUser}
       />
 
-      <main id="main-content" className="main-content-shell">
+      <header className={`mobile-top-bar${activeView === 'dashboard' ? ' active' : ''}`} aria-label="Dashboard header">
+        <div className="mobile-user-tag" aria-label="Current user">
+          {currentUser?.username ? `@${currentUser.username}` : '@user'}
+        </div>
+
+        <div className="mobile-add-actions" ref={mobileActionsRef}>
+          <button
+            type="button"
+            className="mobile-plus-btn"
+            onClick={() => setIsMobileAddMenuOpen((open) => !open)}
+            aria-label="Open add menu"
+            aria-expanded={isMobileAddMenuOpen}
+            aria-haspopup="menu"
+          >
+            <Plus size={20} strokeWidth={2.3} />
+          </button>
+
+          {isMobileAddMenuOpen ? (
+            <div className="mobile-add-menu" role="menu" aria-label="Add actions">
+              <button type="button" role="menuitem" className="mobile-add-menu-item" onClick={openTransactionModal}>
+                Add Transaction
+              </button>
+              <button type="button" role="menuitem" className="mobile-add-menu-item" onClick={openStartingBalanceModal}>
+                Add Starting Balance
+              </button>
+              <button type="button" role="menuitem" className="mobile-add-menu-item" onClick={openCategoryModal}>
+                Add Category
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </header>
+
+      <main
+        id="main-content"
+        className={`main-content-shell${activeView === 'dashboard' ? ' with-mobile-header' : ''}`}
+      >
         <ActiveView
           key={activeView}
           onNavigate={setActiveView}

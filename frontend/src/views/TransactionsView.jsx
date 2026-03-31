@@ -59,9 +59,17 @@ export default function TransactionsView({ onNavigate, transactionsRefreshTick, 
     const loadCategories = async () => {
       try {
         const data = await getCategories();
-        setCategories(data);
+        // Normalize category payloads across array and wrapped response formats.
+        if (Array.isArray(data)) {
+          setCategories(data);
+        } else if (Array.isArray(data?.data)) {
+          setCategories(data.data);
+        } else {
+          setCategories([]);
+        }
       } catch (error) {
         console.error('Error loading categories:', error);
+        setCategories([]);
       }
     };
 
@@ -84,11 +92,17 @@ export default function TransactionsView({ onNavigate, transactionsRefreshTick, 
           payment_method: methodFilter === 'all' ? undefined : methodFilter,
         });
 
-        setRecords(data.data || []);
-        setPagination(data.pagination || { has_more: false, next_cursor: null });
+        // Normalize transaction payloads to avoid render crashes on unexpected shapes.
+        const normalizedRecords = Array.isArray(data?.data)
+          ? data.data
+          : (Array.isArray(data) ? data : []);
+
+        setRecords(normalizedRecords);
+        setPagination(data?.pagination || { has_more: false, next_cursor: null });
       } catch (error) {
         setErrorMessage(error.message || 'Failed to load transactions');
         setRecords([]);
+        setPagination({ has_more: false, next_cursor: null });
       } finally {
         setIsLoading(false);
       }
@@ -97,7 +111,7 @@ export default function TransactionsView({ onNavigate, transactionsRefreshTick, 
     loadTransactions();
   }, [cursor, fromDate, toDate, categoryFilter, typeFilter, methodFilter, transactionsRefreshTick]);
 
-  const categoryOptions = useMemo(() => ['all', ...categories], [categories]);
+  const categoryOptions = useMemo(() => ['all', ...(Array.isArray(categories) ? categories : [])], [categories]);
 
   const resetCursorForFilter = () => {
     setCursor(null);

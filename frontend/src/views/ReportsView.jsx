@@ -59,6 +59,10 @@ export default function ReportsView() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+  const gridRows = Array.isArray(previewData?.grid) ? previewData.grid : [];
+  const numericColumns = Array.isArray(previewData?.cell_types?.numeric_columns)
+    ? previewData.cell_types.numeric_columns
+    : [];
 
   // Generate list of available months (only past months for current year)
   const getAvailableMonths = () => {
@@ -79,7 +83,9 @@ export default function ReportsView() {
         const data = period === 'Monthly'
           ? await getPreviewMonthly(selectedYear, selectedMonth)
           : await getPreviewYearly(selectedYear);
-        setPreviewData(data);
+        // Accept both direct and wrapped response formats.
+        const normalized = data?.grid ? data : (data?.data?.grid ? data.data : null);
+        setPreviewData(normalized);
       } catch (error) {
         const message = error?.message || 'Failed to load report';
 
@@ -138,7 +144,7 @@ export default function ReportsView() {
 
   // Helper function to check if a cell is part of a merged group
   const isMergedCell = (rowIdx, colIdx) => {
-    if (!previewData?.merges) return null;
+    if (!Array.isArray(previewData?.merges)) return null;
     return previewData.merges.find(
       (merge) => rowIdx > merge.r1 && rowIdx <= merge.r2 && colIdx >= merge.c1 && colIdx <= merge.c2
     );
@@ -146,7 +152,7 @@ export default function ReportsView() {
 
   // Helper function to check if a cell is the header of a merged group
   const isMergeStart = (rowIdx, colIdx) => {
-    if (!previewData?.merges) return false;
+    if (!Array.isArray(previewData?.merges)) return false;
     return previewData.merges.find(
       (merge) => rowIdx === merge.r1 && colIdx === merge.c1
     );
@@ -160,9 +166,10 @@ export default function ReportsView() {
   };
 
   const formatCellValue = (value, rowIdx, colIdx) => {
+    void rowIdx;
     if (value === null || value === undefined) return '';
     // Check if this column is numeric
-    if (previewData?.cell_types?.numeric_columns?.includes(colIdx) && typeof value === 'number') {
+    if (numericColumns.includes(colIdx) && typeof value === 'number') {
       return formatDetailedCurrency(value);
     }
     return String(value);
@@ -275,23 +282,23 @@ export default function ReportsView() {
           <div style={{ padding: '48px', textAlign: 'center', color: '#666' }}>
             Loading report preview...
           </div>
-        ) : previewData?.grid ? (
+        ) : gridRows.length > 0 ? (
           <div className="reports-v2-grid-scroll">
             <table className="reports-v2-table">
               <thead>
                 <tr className="reports-v2-grid-letters">
                   <th className="reports-v2-index-corner" />
-                  {previewData.grid[0]?.map((_, idx) => (
+                  {gridRows[0]?.map((_, idx) => (
                     <th key={idx}>{String.fromCharCode(65 + idx)}</th>
                   ))}
                 </tr>
               </thead>
 
               <tbody>
-                {previewData.grid.map((row, rowIdx) => (
+                {gridRows.map((row, rowIdx) => (
                   <tr key={rowIdx} className="reports-v2-row">
                     <td className="reports-v2-row-index">{rowIdx + 1}</td>
-                    {row.map((cell, colIdx) => {
+                    {(Array.isArray(row) ? row : []).map((cell, colIdx) => {
                       const merge = isMergedCell(rowIdx, colIdx);
                       const isStart = isMergeStart(rowIdx, colIdx);
 
@@ -302,7 +309,7 @@ export default function ReportsView() {
 
                       const colspan = getMergeColspan(rowIdx, colIdx);
                       const formattedValue = formatCellValue(cell, rowIdx, colIdx);
-                      const isNumeric = previewData?.cell_types?.numeric_columns?.includes(colIdx);
+                      const isNumeric = numericColumns.includes(colIdx);
 
                       return (
                         <td
