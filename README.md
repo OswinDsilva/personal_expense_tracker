@@ -1,7 +1,7 @@
 # Personal Expense Tracker
 
 <p align="center">
-	<b>A full-stack personal finance tracker — FastAPI backend with a premium dark-mode React dashboard (Kharcha).</b>
+	<b>A full-stack personal expense tracker — FastAPI backend with a React + Vite dashboard.</b>
 </p>
 
 <p align="center">
@@ -10,23 +10,23 @@
 	<img src="https://img.shields.io/badge/SQLAlchemy-2.0+-D71F00?style=for-the-badge&logo=sqlalchemy&logoColor=white" alt="SQLAlchemy" />
 	<img src="https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
 	<img src="https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT" />
-	<img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React" />
+	<img src="https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react&logoColor=white" alt="React" />
 	<img src="https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
-	<img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+	<img src="https://img.shields.io/badge/Tailwind_CSS-4.2-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
 </p>
 
 ---
 
 ## About
 
-This project is a backend API for tracking personal finances across cash and UPI accounts. It supports:
+Personal Expense Tracker is a full-stack application for managing personal finances across multiple payment methods (cash, UPI, etc.). Built with FastAPI and React, it provides a complete system for tracking income, expenses, and transfers with detailed reporting and analytics capabilities.
 
-- User authentication with JWT
-- Category CRUD
-- Monthly starting balance records
-- Income, expense, transfer, and adjustment transactions
-- Cursor-based transaction pagination with filters
-- Monthly reports with spending/income totals and ending balances
+- **User Authentication**: JWT-based auth with Argon2 password hashing
+- **Categories**: Full CRUD operations for transaction categories
+- **Monthly Balances**: Track opening balances for cash and payment methods
+- **Transactions**: Support for income, expenses, transfers, and adjustments
+- **Filtering & Pagination**: Advanced cursor-based pagination with date, category, and payment method filters
+- **Reports**: Monthly summaries with spending/income totals, daily breakdowns, and ending balances
 
 The backend is built with FastAPI, SQLAlchemy, and PostgreSQL, and includes pytest-based test coverage for core routes.
 
@@ -36,15 +36,15 @@ The backend is built with FastAPI, SQLAlchemy, and PostgreSQL, and includes pyte
 
 | Feature | Description |
 |---|---|
-| Authentication | First-user admin registration, login, and current-user lookup (`/auth/me`) |
-| Categories | Create, list, retrieve, update, and delete categories |
-| Starting Balances | Store monthly opening balances (first day of month only) |
-| Transactions | Create and manage income/expense/adjustment entries |
-| Transfers | Atomic two-record transfer flow between payment methods |
-| Filtering | Filter transactions by date range, category, payment method, and type |
-| Pagination | Cursor-based pagination for transactions (`cursor`, `limit`) |
-| Reports | Monthly aggregates and daily spending breakdown |
-| Validation | Pydantic + DB constraints for data integrity |
+| **Authentication** | Admin registration (first user only), login, and user profile lookup |
+| **Categories** | Create, list, retrieve, update, and delete expense categories |
+| **Starting Balances** | Record monthly opening balances for tracking purposes |
+| **Transactions** | Create and manage income, expense, transfer, and adjustment records |
+| **Transfers** | Atomic two-entry transfer mechanism between payment methods |
+| **Filtering** | Filter by date range, category, payment method, and transaction type |
+| **Pagination** | Cursor-based pagination with configurable limits for large datasets |
+| **Reports** | Monthly summaries with daily breakdowns and balance tracking |
+| **Data Validation** | Pydantic schemas + database constraints for integrity |
 
 ---
 
@@ -77,17 +77,18 @@ personal_expense_tracker/
 |  |- database.py
 |  |- init_db.py
 |  `- main.py
-|- frontend/            ← React + Vite dashboard (Kharcha)
+|- frontend/            ← React + Vite dashboard (fully integrated with API)
 |  |- src/
 |  |  |- components/   ← Sidebar, MetricCard, Charts, TransactionList
-|  |  |- data/         ← Mock data (replace with API calls)
-|  |  |- lib/          ← Utility helpers
+|  |  |- data/         ← Utility functions and deprecated mock data
+|  |  |- hooks/        ← useHealthCheck for backend connectivity
+|  |  |- lib/          ← API client (api.js) and utilities
 |  |  |- views/        ← Dashboard, Transactions, Reports, Analytics
 |  |  |- App.jsx
-|  |  `- index.css     ← Obsidian Architect design system tokens
+|  |  `- index.css     
 |  |- index.html
 |  `- package.json
-|- documentation/       ← design.md, backend-requirements.md, API docs
+|- documentation/      
 |- sql/
 |- tests/
 |- pyproject.toml
@@ -130,7 +131,7 @@ uv sync
 Or using `pip`:
 
 ```bash
-pip install -e .
+pip install -r requirements.txt
 ```
 
 ### 4. Configure environment
@@ -170,9 +171,9 @@ Open:
 
 ---
 
-## Frontend Setup (Kharcha Dashboard)
+## Frontend Setup
 
-The frontend is a React + Vite application implementing the **Obsidian Architect** dark-mode design system based on the Stitch `Kharcha Dashboard` project.
+The frontend is a React + Vite application with a modern dark-mode design system using Tailwind CSS and Recharts for data visualization.
 
 ### Prerequisites
 
@@ -185,7 +186,7 @@ cd frontend
 npm install
 ```
 
-> **Note:** Tailwind CSS v4, PostCSS, Autoprefixer, Recharts, Lucide React, clsx, and tailwind-merge are all listed in `package.json` and will be installed automatically.
+> **Note:** All dependencies (Tailwind CSS v4, PostCSS, Recharts, Lucide React, etc.) are specified in `package.json` and installed automatically via npm.
 
 ### 2. Start development server
 
@@ -204,15 +205,17 @@ The dashboard will be available at `http://localhost:5173`.
 | Reports | Sidebar → Reports | Financial Excel-style data grid with summary metrics |
 | Analytics | Sidebar → Analytics | Category donut chart, bar chart, and detailed spend cards |
 
-### 4. Mock Data
+### 4. Backend Integration
 
-The frontend currently uses **mock data** from `src/data/mockData.js`. To connect to the live backend, replace the mock values with `fetch()` calls to the API endpoints documented in [`documentation/backend-requirements.md`](documentation/backend-requirements.md).
+The frontend is **fully integrated with the live backend API**. All major views (Dashboard, Transactions, Reports) fetch real-time data from the backend. The app validates backend connectivity via the `/health` endpoint on startup.
 
-### 5. Design System
+API client functions are defined in `src/lib/api.js` and include:
+- `getMonthlyData()` / `getYearlyData()` - Reports and dashboard data
+- `getTransactions()` - Transaction list with filtering
+- `getCategories()` - Category management
+- Download and export functions for reports
 
-All design tokens (colors, typography, glassmorphism, animations) are defined in `src/index.css`. The system follows the **Obsidian Architect** specification — see [`documentation/design.md`](documentation/design.md) for the full reference.
-
-### 6. Build for production
+### 5. Build for production
 
 ```bash
 npm run build
@@ -363,21 +366,20 @@ Additional docs are available in:
 
 ---
 
-## Current Scope and Next Work
+## Current Status and Future Work
 
-- `backend/routers/analytics.py` and `backend/routers/exports.py` currently exist as placeholders.
-- The frontend is implemented with mock data; API integration is pending.
+**Completed:**
+- ✅ Full backend API with transaction, category, and reporting functionality
+- ✅ Frontend fully integrated with live backend API
+- ✅ JWT authentication and user management
+- ✅ Dashboard with real-time data, 6-month trend chart, and recent transactions
+- ✅ Transaction filtering and pagination
+- ✅ Monthly and yearly reports with export capabilities
 
-Potential next additions:
-
-1. Wire frontend to live backend API endpoints (see `documentation/backend-requirements.md`)
-2. Analytics endpoints (category trend, payment-method trend, period comparisons)
-3. Export endpoints (CSV/XLSX/PDF)
-4. Add transaction create/edit modal to the frontend
-5. Role-based authorization checks beyond authentication
-
----
-
-## License
-
-Add a license file (for example, MIT) if you plan to publish this repository.
+**In Progress / Upcoming:**
+1. Analytics page implementation (category trends, payment method analysis, insights)
+2. Transaction create/edit UI modals (partial support exists in components)
+3. Advanced export functionality (CSV/XLSX/PDF downloads)
+4. Enhanced role-based access control beyond authentication
+5. Additional filtering and search capabilities
+6. Mobile responsive enhancements
