@@ -71,16 +71,22 @@ export default function App() {
 
   const openTransactionModal = () => {
     setIsAddModalOpen(true);
+    setIsStartingBalanceModalOpen(false);
+    setIsCategoryModalOpen(false);
     setIsMobileAddMenuOpen(false);
   };
 
   const openStartingBalanceModal = () => {
     setIsStartingBalanceModalOpen(true);
+    setIsAddModalOpen(false);
+    setIsCategoryModalOpen(false);
     setIsMobileAddMenuOpen(false);
   };
 
   const openCategoryModal = () => {
     setIsCategoryModalOpen(true);
+    setIsAddModalOpen(false);
+    setIsStartingBalanceModalOpen(false);
     setIsMobileAddMenuOpen(false);
   };
 

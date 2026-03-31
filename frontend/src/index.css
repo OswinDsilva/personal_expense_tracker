@@ -1297,6 +1297,7 @@ body {
   max-width: 520px;
   max-height: 85vh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: var(--surface-low);
   border-radius: 1.25rem;
   border: 1px solid rgba(72, 72, 73, 0.4);
@@ -2115,6 +2116,18 @@ body {
 
   .btn-transactions-export {
     width: 100%;
+  }
+
+  .modal-shell {
+    width: 95%;
+    max-width: none;
+    max-height: calc(100vh - 11rem);
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .modal-overlay {
+    z-index: 38;
   }
 
   .transactions-v2-filters {
