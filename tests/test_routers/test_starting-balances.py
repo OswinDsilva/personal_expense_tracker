@@ -24,16 +24,6 @@ def test_create_starting_balance_not_first_of_month(client, auth_headers):
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
-def test_create_starting_balance_future_date(client, auth_headers):
-    response = client.post(
-        "/starting-balances",
-        headers=auth_headers,
-        json={"month": "4026-02-01", "upi_balance": 0, "cash_balance": 0},
-    )
-
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-
-
 @pytest.mark.parametrize(
     "month,cash_balance,upi_balance",
     [("2026-02-01", -1, 0), ("2026-02-01", 0, -1)],

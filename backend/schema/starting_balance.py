@@ -15,9 +15,6 @@ class StartingBalanceCreate(BaseModel):
         if v.day != 1:
             raise ValueError("Month must be the first day of the month")
 
-        if v > date.today():
-            raise ValueError("Cannot create balance for future months")
-
         return v
 
 
