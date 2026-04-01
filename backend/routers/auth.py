@@ -1,10 +1,12 @@
+from datetime import date
+
 from argon2.exceptions import VerifyMismatchError
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from ..auth.jwt import create_access_token, get_current_user
 from ..database import get_db
-from ..models import User
+from ..models import StartingBalance, User
 from ..schema import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -19,7 +21,17 @@ def register_user(req: RegisterRequest, db: Session = Depends(get_db)):
 
     user = User(username=req.username, password=req.password, role="ADMIN")
     db.add(user)
+    db.flush()
+
+    starting_anchor = StartingBalance(
+        month=date(1980, 1, 1),
+        cash_balance=0,
+        upi_balance=0,
+    )
+
+    db.add(starting_anchor)
     db.commit()
+
     db.refresh(user)
 
     token = create_access_token({"sub": user.username, "role": user.role})
