@@ -1,7 +1,10 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from .config import ENVIRONMENT
+from .database import get_db
 from .routers import auth, categories, reports, starting_balances, transactions
 
 app = FastAPI(
@@ -41,5 +44,6 @@ async def root():
 
 
 @app.get("/health")
-async def health():
+async def health(db: Session = Depends(get_db)):
+    db.execute(text("SELECT 1"))
     return {"status": "ok"}

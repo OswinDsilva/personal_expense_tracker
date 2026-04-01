@@ -1,5 +1,12 @@
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import { formatINR } from '../data/mockData';
+
+const formatMetricINR = (value) =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value || 0));
 
 export default function MetricCard({ label, value, change, colorAccent = 'primary', style = {}, delay = 0 }) {
   const isPositive = change >= 0;
@@ -43,7 +50,7 @@ export default function MetricCard({ label, value, change, colorAccent = 'primar
           lineHeight: 1.1,
         }}
       >
-        {formatINR(value)}
+        {formatMetricINR(value)}
       </div>
 
       {change !== undefined && (
