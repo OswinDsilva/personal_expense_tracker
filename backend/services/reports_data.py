@@ -1,17 +1,15 @@
 from calendar import monthrange
 from datetime import date
 
-from fastapi import Depends
 from sqlalchemy import and_, extract, select
 from sqlalchemy.orm import Session
 
-from ..database import get_db
 from ..models import Transaction
 from ..utils import is_credit, is_debit
 from .balance_calculator import starting_balance_resolver
 
 
-def get_yearly_data_logic(year: int, db: Session = Depends(get_db)):
+def get_yearly_data_logic(year: int, db: Session):
     monthly_data = {}
     for month in range(1, 12 + 1):
         monthly_data[month] = {

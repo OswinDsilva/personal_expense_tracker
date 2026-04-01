@@ -14,7 +14,7 @@ router = APIRouter(prefix="/categories", tags=["categories"])
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=CategoryResponse)
-async def create_category(
+def create_category(
     category: CategoryRequest, curr_user=Depends(get_current_user), db: Session = Depends(get_db)
 ) -> CategoryResponse:
     cat = Category(name=category.name)
@@ -29,7 +29,7 @@ async def create_category(
 
 
 @router.get("/", response_model=List[CategoryResponse])
-async def get_all_categories(
+def get_all_categories(
     curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> List[CategoryResponse]:
     categories = db.execute(select(Category)).scalars().all()
@@ -37,7 +37,7 @@ async def get_all_categories(
 
 
 @router.get("/{id}", response_model=CategoryResponse)
-async def get_category(
+def get_category(
     id: int, curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> CategoryResponse:
     category = db.execute(select(Category).filter(Category.id == id)).scalars().first()
@@ -47,7 +47,7 @@ async def get_category(
 
 
 @router.patch("/{id}", response_model=CategoryResponse)
-async def update_category(
+def update_category(
     id: int,
     cat: CategoryRequest,
     curr_user: User = Depends(get_current_user),
@@ -68,7 +68,7 @@ async def update_category(
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_category(
+def delete_category(
     id: int, curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     category_to_delete = db.execute(select(Category).filter(Category.id == id)).scalars().first()
