@@ -140,7 +140,15 @@ def get_preview_monthly(
     curr_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    data = get_monthly_data_logic(year, month, db)
+    if not 1 <= month <= 12:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid month value")
+
+    try:
+        data = get_monthly_data_logic(year, month, db)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Starting balance not found"
+        )
 
     sheet_title = map_month(month)
 
@@ -179,7 +187,12 @@ def get_preview_yearly(
     curr_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    data = get_yearly_data_logic(year, db)
+    try:
+        data = get_yearly_data_logic(year, db)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Starting balance not found"
+        )
 
     sheet_title = str(year)
 

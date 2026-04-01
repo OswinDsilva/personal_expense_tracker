@@ -55,28 +55,43 @@ export default function DashboardView({ onNavigate, transactionsRefreshTick }) {
   const [yearlyData, setYearlyData] = useState(null);
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTrendLoading, setIsTrendLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [trendErrorMessage, setTrendErrorMessage] = useState('');
 
   useEffect(() => {
     const loadDashboard = async () => {
       setIsLoading(true);
+      setIsTrendLoading(true);
       setErrorMessage('');
+      setTrendErrorMessage('');
+
+      const yearlyPromise = getYearlyData(year)
+        .then((data) => ({ data, error: null }))
+        .catch((error) => ({ data: null, error }));
 
       try {
-        const [monthly, yearly, recent] = await Promise.all([
+        const [monthly, recent] = await Promise.all([
           getMonthlyData(year, month),
-          getYearlyData(year),
           getTransactions({ limit: 5 }),
         ]);
 
         setMonthlyData(monthly);
-        setYearlyData(yearly);
         setRecentTransactions(recent.data || []);
       } catch (error) {
         setErrorMessage(error.message || 'Failed to load dashboard data');
       } finally {
         setIsLoading(false);
       }
+
+      const yearlyResult = await yearlyPromise;
+      if (yearlyResult.error) {
+        setYearlyData(null);
+        setTrendErrorMessage(yearlyResult.error.message || 'Failed to load trend data');
+      } else {
+        setYearlyData(yearlyResult.data);
+      }
+      setIsTrendLoading(false);
     };
 
     loadDashboard();
@@ -216,8 +231,14 @@ export default function DashboardView({ onNavigate, transactionsRefreshTick }) {
               </span>
             </div>
           </div>
-          {isLoading ? (
+          {isTrendLoading ? (
             <div className="text-label text-muted" style={{ padding: '2rem 0.25rem' }}>Loading trend...</div>
+          ) : trendErrorMessage ? (
+            <div className="text-label" style={{ padding: '2rem 0.25rem', color: 'var(--error)' }}>
+              {trendErrorMessage}
+            </div>
+          ) : trendData.length === 0 ? (
+            <div className="text-label text-muted" style={{ padding: '2rem 0.25rem' }}>No trend data available</div>
           ) : (
             <SpendingTrendChart data={trendData} />
           )}
