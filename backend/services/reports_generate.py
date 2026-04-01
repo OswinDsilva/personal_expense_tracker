@@ -58,12 +58,22 @@ def add_monthly_sheet(workbook: Workbook, data: dict, month_name: str):
         worksheet.write(row, col + 2, rec["upi_spending"])
         row += 1
 
-    worksheet.write(row, col, 'Total Spending')
-    worksheet.write(row, col+1, data['totals']['cash_spending'])
-    worksheet.write(row, col+1, data['totals']['upi_spending'])
     row += 1
 
-    worksheet.write(row, col, "")
+    worksheet.write(row, col, "Total Spending", headings_format)
+    worksheet.write(row, col + 1, data["totals"]["cash_spending"])
+    worksheet.write(row, col + 2, data["totals"]["upi_spending"])
+    row += 1
+
+    worksheet.write(row, col, "Total Income", headings_format)
+    worksheet.write(row, col + 1, data["totals"]["cash_income"])
+    worksheet.write(row, col + 2, data["totals"]["upi_income"])
+    row += 1
+
+    worksheet.write(row, col, "End balance", headings_format)
+    worksheet.write(row, col + 1, data["ending_balance"]["cash"])
+    worksheet.write(row, col + 2, data["ending_balance"]["upi"])
+    row += 1
 
     worksheet.autofit()
 

@@ -259,4 +259,4 @@ def delete_transaction_by_id(
         db.delete(transaction)
 
     db.commit()
-    return None
+

@@ -165,6 +165,14 @@ def get_preview_monthly(
     for rec in daily_data:
         grid.append([rec["transaction_date"], rec["cash_spending"], rec["upi_spending"]])
 
+    grid.append([None, None, None])
+
+    grid.append(["Total Spending", data["totals"]["cash_spending"], data["totals"]["upi_spending"]])
+
+    grid.append(["Total Income", data["totals"]["cash_income"], data["totals"]["upi_income"]])
+
+    grid.append(["End balance", data["ending_balance"]["cash"], data["ending_balance"]["upi"]])
+
     # 0-indexed
     merges = [{"r1": 3, "c1": 1, "r2": 3, "c2": 2, "label": "Spendings"}]
 
