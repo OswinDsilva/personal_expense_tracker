@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { LayoutDashboard, ReceiptText, BarChart2, TrendingUp, Plus } from 'lucide-react';
 import './index.css';
 import Sidebar from './components/Sidebar';
@@ -11,6 +11,16 @@ import ReportsView from './views/ReportsView';
 import AnalyticsView from './views/AnalyticsView';
 import LoginView from './views/LoginView';
 import LoadingSpinner from './components/LoadingSpinner';
+import { AUTH_EXPIRED_EVENT, getCurrentUser, resolveStoredToken } from './lib/api';
+
+const readStoredUser = () => {
+  try {
+    const stored = localStorage.getItem('current_user');
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
 
 const VIEWS = {
   dashboard: DashboardView,
@@ -27,15 +37,8 @@ const MOBILE_NAV_ITEMS = [
 ];
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(localStorage.getItem('access_token')));
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem('current_user');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(resolveStoredToken()));
+  const [currentUser, setCurrentUser] = useState(() => readStoredUser());
   const [activeView, setActiveView] = useState('dashboard');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isStartingBalanceModalOpen, setIsStartingBalanceModalOpen] = useState(false);
@@ -53,7 +56,7 @@ export default function App() {
     setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('token_type');
     localStorage.removeItem('current_user');
@@ -68,7 +71,7 @@ export default function App() {
     setIsCategoryModalOpen(false);
     setIsMobileAddMenuOpen(false);
     setIsMobileUserMenuOpen(false);
-  };
+  }, []);
 
   const openTransactionModal = () => {
     setIsAddModalOpen(true);
@@ -118,6 +121,44 @@ export default function App() {
       document.removeEventListener('keydown', handleEscape);
     };
   }, []);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      handleLogout();
+    };
+
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+
+    return () => {
+      window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+    };
+  }, [handleLogout]);
+
+  useEffect(() => {
+    const token = resolveStoredToken();
+
+    if (!token) {
+      handleLogout();
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    getCurrentUser()
+      .then((user) => {
+        if (isMounted) {
+          setCurrentUser(user ?? null);
+          setIsAuthenticated(true);
+        }
+      })
+      .catch(() => {
+        // The 401 path is handled globally through AUTH_EXPIRED_EVENT.
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [handleLogout]);
 
   useEffect(() => {
     setIsMobileAddMenuOpen(false);

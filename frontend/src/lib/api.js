@@ -1,6 +1,7 @@
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+export const AUTH_EXPIRED_EVENT = 'auth:expired';
 
-const resolveStoredToken = () => {
+export const resolveStoredToken = () => {
   const candidates = ['access_token', 'token', 'auth_token', 'jwt'];
   for (const key of candidates) {
     const value = localStorage.getItem(key);
@@ -37,6 +38,10 @@ export const apiRequest = async (path, options = {}) => {
     ...options,
     headers,
   });
+
+  if (!response.ok && response.status === 401 && path !== '/auth/login' && path !== '/auth/register') {
+    window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT));
+  }
 
   if (!response.ok) {
     throw new Error(await parseError(response));
