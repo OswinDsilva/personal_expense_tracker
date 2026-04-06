@@ -1988,6 +1988,59 @@ body {
     background: rgba(177, 255, 206, 0.14);
   }
 
+  .mobile-user-menu-container {
+    position: relative;
+  }
+
+  .mobile-user-menu {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 0.4rem);
+    min-width: 10rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.4rem;
+    border-radius: 0.6rem;
+    border: 1px solid rgba(72, 72, 73, 0.45);
+    background: rgba(19, 19, 20, 0.98);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.35);
+    animation: slideIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 50;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .mobile-user-menu-item {
+    border: 0;
+    background: transparent;
+    color: var(--on-surface);
+    text-align: left;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.6rem;
+    font-family: var(--font-label);
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.16s ease;
+  }
+
+  .mobile-user-menu-item:hover {
+    background: var(--surface-hi);
+    color: var(--error);
+  }
+
   .mobile-add-actions {
     position: relative;
   }

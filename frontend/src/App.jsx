@@ -41,9 +41,11 @@ export default function App() {
   const [isStartingBalanceModalOpen, setIsStartingBalanceModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isMobileAddMenuOpen, setIsMobileAddMenuOpen] = useState(false);
+  const [isMobileUserMenuOpen, setIsMobileUserMenuOpen] = useState(false);
   const [transactionsRefreshTick, setTransactionsRefreshTick] = useState(0);
   const [categoriesRefreshTick, setCategoriesRefreshTick] = useState(0);
   const mobileActionsRef = useRef(null);
+  const mobileUserMenuRef = useRef(null);
   const ActiveView = VIEWS[activeView] ?? DashboardView;
 
   const handleLoginSuccess = (user) => {
@@ -65,6 +67,7 @@ export default function App() {
     setIsStartingBalanceModalOpen(false);
     setIsCategoryModalOpen(false);
     setIsMobileAddMenuOpen(false);
+    setIsMobileUserMenuOpen(false);
   };
 
   const openTransactionModal = () => {
@@ -90,14 +93,20 @@ export default function App() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Close add menu if click is outside
       if (mobileActionsRef.current && !mobileActionsRef.current.contains(event.target)) {
         setIsMobileAddMenuOpen(false);
+      }
+      // Close user menu if click is outside
+      if (mobileUserMenuRef.current && !mobileUserMenuRef.current.contains(event.target)) {
+        setIsMobileUserMenuOpen(false);
       }
     };
 
     const handleEscape = (event) => {
       if (event.key === 'Escape') {
         setIsMobileAddMenuOpen(false);
+        setIsMobileUserMenuOpen(false);
       }
     };
 
@@ -112,6 +121,7 @@ export default function App() {
 
   useEffect(() => {
     setIsMobileAddMenuOpen(false);
+    setIsMobileUserMenuOpen(false);
   }, [activeView]);
 
   if (!isAuthenticated) {
@@ -134,8 +144,30 @@ export default function App() {
       />
 
       <header className={`mobile-top-bar${activeView === 'dashboard' ? ' active' : ''}`} aria-label="Dashboard header">
-        <div className="mobile-user-tag" aria-label="Current user">
-          {currentUser?.username ? `@${currentUser.username}` : '@user'}
+        <div className="mobile-user-menu-container" ref={mobileUserMenuRef}>
+          <button
+            type="button"
+            className="mobile-user-tag"
+            aria-label="User menu"
+            aria-expanded={isMobileUserMenuOpen}
+            aria-haspopup="menu"
+            onClick={() => setIsMobileUserMenuOpen((open) => !open)}
+          >
+            {currentUser?.username ? `@${currentUser.username}` : '@user'}
+          </button>
+
+          {isMobileUserMenuOpen ? (
+            <div className="mobile-user-menu" role="menu" aria-label="User options">
+              <button
+                type="button"
+                role="menuitem"
+                className="mobile-user-menu-item"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <div className="mobile-add-actions" ref={mobileActionsRef}>
