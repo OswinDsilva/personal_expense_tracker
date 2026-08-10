@@ -16,6 +16,6 @@ wheels/
 .env.test
 .ruff_cache
 
-non_imp_info/
+output/
 
 .agent
