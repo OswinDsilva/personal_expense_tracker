@@ -153,9 +153,9 @@ JWT_EXPIRATION_DAYS=7
 ```
 
 ### 5. Initialize tables
-
+Alembic is included in the dependencies, so you can use it to initialize the tables.
 ```bash
-python -m backend.init_db
+alembic upgrade head
 ```
 
 ### 6. Run the API
