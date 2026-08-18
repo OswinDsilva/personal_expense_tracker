@@ -70,3 +70,11 @@ jobs:
 
       - name: Tests
         run: uv run pytest
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Repository
+        uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -t backend-ci-check -f backend/Dockerfile .
