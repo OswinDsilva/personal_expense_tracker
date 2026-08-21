@@ -16,6 +16,7 @@ app = FastAPI(
 origins = [
     "https://personal-expense-tracker-self-mu.vercel.app",
     "http://localhost",
+    "http://localhost:80",
     "http://localhost:8080",
     "http://localhost:5173",
     "http://127.0.0.1:5173",

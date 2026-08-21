@@ -10,4 +10,4 @@ RUN uv sync
 
 COPY . .
 
-CMD ["sh","-c","uv run alembic upgrade head && uv run uvicorn backend.main:app --host 0.0.0.0 --reload"]
+CMD ["sh","-c","uv run alembic upgrade head && uv run uvicorn backend.main:app --host 0.0.0.0"]
