@@ -76,5 +76,29 @@ jobs:
     steps:
       - name: Setup Repository
         uses: actions/checkout@v4
-      - name: Build backend image
-        run: docker build -t backend-ci-check -f backend/Dockerfile .
+
+      - name: Build .env file
+        env:
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          JWT_ALGORITHM: ${{ vars.JWT_ALGORITHM }}
+          JWT_EXPIRATION_DAYS: ${{ vars.JWT_EXPIRATION_DAYS }}
+        run: |
+            echo "JWT_SECRET_KEY=$JWT_SECRET_KEY" >> .env
+            echo "JWT_ALGORITHM=$JWT_ALGORITHM" >> .env
+            echo "JWT_EXPIRATION_DAYS=$JWT_EXPIRATION_DAYS" >> .env
+
+      - name: Build images
+        run: docker compose build
+
+      - name: Run containers
+        run: docker compose up -d --wait
+
+      - name: Check if the website is up on localhost
+        run: curl --fail --silent --show-error http://localhost:80
+
+      - name: Check if the backend is reachable
+        run: curl --fail --silent --show-error http://localhost:80/api/health
+
+      - name: Teardown
+        if: always()
+        run: docker compose down -v
