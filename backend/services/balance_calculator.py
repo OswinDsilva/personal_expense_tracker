@@ -7,11 +7,12 @@ from ..models import StartingBalance, Transaction
 from ..utils import is_credit
 
 
-def starting_balance_resolver(target_date: date, db: Session):
+def starting_balance_resolver(target_date: date, id: int, db: Session):
     upi_net = 0
     cash_net = 0
     starting_balance = db.execute(
         select(StartingBalance)
+        .where(StartingBalance.user_id == id)
         .where(StartingBalance.month <= target_date)
         .order_by(StartingBalance.month.desc())
         .limit(1)
@@ -29,6 +30,7 @@ def starting_balance_resolver(target_date: date, db: Session):
         calc_transactions = (
             db.execute(
                 select(Transaction)
+                .where(Transaction.user_id == id)
                 .where(Transaction.transaction_date >= starting_balance.month)
                 .where(Transaction.transaction_date <= last_day_before_requested)
             )

@@ -9,20 +9,21 @@ from backend.models import Category, Transaction
 
 
 @pytest.fixture(scope="function")
-def sample_category(db_session):
-    cat1 = Category(name="Food")
+def sample_category(db_session, seed_user):
+    cat1 = Category(name="Food", user_id=seed_user["id"])
     db_session.add(cat1)
     db_session.commit()
     return cat1
 
 
-def test_create_income_transaction(db_session, sample_category):
+def test_create_income_transaction(db_session, seed_user, sample_category):
     transaction = Transaction(
         transaction_date=date(2006, 2, 9),
         description="Paid off student debt",
         amount=25000,
         payment_method="upi",
         transaction_type="income",
+        user_id=seed_user["id"],
     )
     db_session.add(transaction)
     db_session.commit()
@@ -30,7 +31,7 @@ def test_create_income_transaction(db_session, sample_category):
     assert transaction.id is not None
 
 
-def test_create_expense_transaction(db_session, sample_category):
+def test_create_expense_transaction(db_session, seed_user, sample_category):
     transaction = Transaction(
         transaction_date=date(2006, 2, 9),
         description="Paid off student debt",
@@ -38,6 +39,7 @@ def test_create_expense_transaction(db_session, sample_category):
         payment_method="upi",
         transaction_type="expense",
         category_id=sample_category.id,
+        user_id=seed_user["id"],
     )
     db_session.add(transaction)
     db_session.commit()
@@ -45,7 +47,7 @@ def test_create_expense_transaction(db_session, sample_category):
     assert transaction.id is not None
 
 
-def test_create_transfer_transaction(db_session):
+def test_create_transfer_transaction(db_session, seed_user):
     t1 = Transaction(
         transaction_date=date(2006, 2, 9),
         description="testing transfer",
@@ -54,6 +56,7 @@ def test_create_transfer_transaction(db_session):
         transaction_type="transfer",
         linked_transfer_id=None,
         is_debit=True,
+        user_id=seed_user["id"],
     )
     db_session.add(t1)
     db_session.flush()
@@ -66,6 +69,7 @@ def test_create_transfer_transaction(db_session):
         transaction_type="transfer",
         linked_transfer_id=None,
         is_debit=False,
+        user_id=seed_user["id"],
     )
     db_session.add(t2)
     db_session.flush()
@@ -79,13 +83,14 @@ def test_create_transfer_transaction(db_session):
     assert t2.linked_transfer_id == t1.id
 
 
-def test_normalize_transaction_type(db_session):
+def test_normalize_transaction_type(db_session, seed_user):
     transaction = Transaction(
         transaction_date=date(2006, 2, 9),
         description="Paid off student debt",
         amount=25000,
         payment_method="upi",
         transaction_type="income",
+        user_id=seed_user["id"],
     )
     db_session.add(transaction)
     db_session.commit()
@@ -93,13 +98,14 @@ def test_normalize_transaction_type(db_session):
     assert transaction.transaction_type == "INCOME"
 
 
-def test_normalize_payment_method(db_session):
+def test_normalize_payment_method(db_session, seed_user):
     transaction = Transaction(
         transaction_date=date(2006, 2, 9),
         description="Paid off student debt",
         amount=25000,
         payment_method="upi",
         transaction_type="income",
+        user_id=seed_user["id"],
     )
     db_session.add(transaction)
     db_session.commit()
@@ -107,59 +113,63 @@ def test_normalize_payment_method(db_session):
     assert transaction.payment_method == "UPI"
 
 
-def test_reject_negative_amount(db_session):
+def test_reject_negative_amount(db_session, seed_user):
     transaction = Transaction(
         transaction_date=date(2006, 2, 9),
         description="Paid off student debt",
         amount=-25000,
         payment_method="upi",
         transaction_type="income",
+        user_id=seed_user["id"],
     )
     with pytest.raises(IntegrityError):
         db_session.add(transaction)
         db_session.commit()
 
 
-def test_reject_expenses_without_category(db_session):
+def test_reject_expenses_without_category(db_session, seed_user):
     transaction = Transaction(
         transaction_date=date(2006, 2, 9),
         description="Paid off student debt",
         amount=25000,
         payment_method="upi",
         transaction_type="expense",
+        user_id=seed_user["id"],
     )
     with pytest.raises(IntegrityError):
         db_session.add(transaction)
         db_session.commit()
 
 
-def test_invalid_payment_method(db_session):
+def test_invalid_payment_method(db_session, seed_user):
     t1 = Transaction(
         transaction_date=date(2006, 2, 9),
         description="testing",
         amount=25000,
         payment_method="now",
         transaction_type="income",
+        user_id=seed_user["id"],
     )
     with pytest.raises(IntegrityError):
         db_session.add(t1)
         db_session.commit()
 
 
-def test_invalid_transaction_type(db_session):
+def test_invalid_transaction_type(db_session, seed_user):
     t1 = Transaction(
         transaction_date=date(2006, 2, 9),
         description="testing",
         amount=25000,
         payment_method="upi",
         transaction_type="noway",
+        user_id=seed_user["id"],
     )
     with pytest.raises(IntegrityError):
         db_session.add(t1)
         db_session.commit()
 
 
-def test_reject_transfer_without_is_debit(db_session):
+def test_reject_transfer_without_is_debit(db_session, seed_user):
     t1 = Transaction(
         transaction_date=date(2006, 2, 9),
         description="testing transfer",
@@ -167,13 +177,14 @@ def test_reject_transfer_without_is_debit(db_session):
         payment_method="upi",
         transaction_type="transfer",
         linked_transfer_id=None,
+        user_id=seed_user["id"]
     )
     with pytest.raises(IntegrityError):
         db_session.add(t1)
         db_session.commit()
 
 
-def test_reject_non_transfer_with_is_debit(db_session):
+def test_reject_non_transfer_with_is_debit(db_session, seed_user):
     t1 = Transaction(
         transaction_date=date(2006, 2, 9),
         description="testing",
@@ -181,13 +192,14 @@ def test_reject_non_transfer_with_is_debit(db_session):
         payment_method="upi",
         transaction_type="income",
         is_debit=True,
+        user_id=seed_user["id"],
     )
     with pytest.raises(IntegrityError):
         db_session.add(t1)
         db_session.commit()
 
 
-def test_reject_non_transfer_with_linked_id(db_session):
+def test_reject_non_transfer_with_linked_id(db_session, seed_user):
     t1 = Transaction(
         transaction_date=date(2006, 2, 9),
         description="testing transfer",
@@ -196,6 +208,7 @@ def test_reject_non_transfer_with_linked_id(db_session):
         transaction_type="transfer",
         linked_transfer_id=None,
         is_debit=True,
+        user_id=seed_user["id"],
     )
     db_session.add(t1)
     db_session.flush()
@@ -207,13 +220,14 @@ def test_reject_non_transfer_with_linked_id(db_session):
         payment_method="cash",
         transaction_type="income",
         linked_transfer_id=t1.id,
+        user_id=seed_user["id"],
     )
     with pytest.raises(IntegrityError):
         db_session.add(t2)
         db_session.commit()
 
 
-def test_category_relationship(db_session, sample_category):
+def test_category_relationship(db_session, seed_user, sample_category):
     t1 = Transaction(
         transaction_date=date(2006, 2, 9),
         description="Paid off student debt",
@@ -221,6 +235,7 @@ def test_category_relationship(db_session, sample_category):
         payment_method="upi",
         transaction_type="expense",
         category_id=sample_category.id,
+        user_id=seed_user["id"],
     )
     db_session.add(t1)
     db_session.commit()
@@ -230,13 +245,14 @@ def test_category_relationship(db_session, sample_category):
     assert t1.category.name == "food"
 
 
-def test_updating_updated_at(db_session):
+def test_updating_updated_at(db_session, seed_user):
     t1 = Transaction(
         transaction_date=date(2006, 2, 9),
         description="testing",
         amount=25000,
         payment_method="cash",
         transaction_type="income",
+        user_id=seed_user["id"],
     )
     db_session.add(t1)
     db_session.commit()
