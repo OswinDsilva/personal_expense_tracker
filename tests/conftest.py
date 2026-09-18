@@ -63,6 +63,49 @@ def seed_user(db_session):
     }
 
 @pytest.fixture(scope="function")
+def seed_second_user_with_data(db_session):
+    other_user = User(username="test2", password="test1234", role="ADMIN")
+    db_session.add(other_user)
+    db_session.commit()
+    db_session.refresh(other_user)
+
+    other_category = Category(name="food", user_id=other_user.id)
+    db_session.add(other_category)
+    db_session.flush()
+
+    other_balance = StartingBalance(
+        month=date(2026, 2, 1),
+        cash_balance=100,
+        upi_balance=200,
+        user_id=other_user.id,
+    )
+    db_session.add(other_balance)
+    db_session.flush()
+
+    other_txn = Transaction(
+        transaction_date=date(2026, 2, 12),
+        description="Other user's expense",
+        amount=50,
+        payment_method="CASH",
+        transaction_type="EXPENSE",
+        category_id=other_category.id,
+        user_id=other_user.id,
+    )
+    db_session.add(other_txn)
+    db_session.commit()
+    db_session.refresh(other_user)
+    db_session.refresh(other_txn)
+
+    data = {"sub": other_user.username, "role": other_user.role}
+    token = create_access_token(data)
+
+    return {
+        "user_id": other_user.id,
+        "headers": {"Authorization": f"Bearer {token}"},
+        "transaction": other_txn,
+    }
+
+@pytest.fixture(scope="function")
 def auth_headers(seed_user):
 
     data = {"sub": seed_user["username"], "role": seed_user["role"]}
