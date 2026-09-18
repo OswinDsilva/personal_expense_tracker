@@ -49,15 +49,23 @@ def client(db_session):
 
     app.dependency_overrides.clear()
 
-
 @pytest.fixture(scope="function")
-def auth_headers(db_session):
+def seed_user(db_session):
     test_user = User(username="test", password="test1234", role="ADMIN")
     db_session.add(test_user)
     db_session.commit()
     db_session.refresh(test_user)
 
-    data = {"sub": test_user.username, "role": test_user.role}
+    return {
+        "id": test_user.id,
+        "username": test_user.username,
+        "role": test_user.role
+    }
+
+@pytest.fixture(scope="function")
+def auth_headers(seed_user):
+
+    data = {"sub": seed_user["username"], "role": seed_user["role"]}
 
     token = create_access_token(data)
 
@@ -65,26 +73,28 @@ def auth_headers(db_session):
 
 
 @pytest.fixture(scope="function")
-def seed_categories(db_session):
-    cat1 = Category(name="food")
-    cat2 = Category(name="travel")
-    cat3 = Category(name="entertainment")
+def seed_categories(db_session, seed_user):
+    cat1 = Category(name="food", user_id=seed_user["id"])
+    cat2 = Category(name="travel", user_id=seed_user["id"])
+    cat3 = Category(name="entertainment", user_id=seed_user["id"])
     db_session.add_all([cat1, cat2, cat3])
     db_session.commit()
     return [cat1, cat2, cat3]
 
 
 @pytest.fixture(scope="function")
-def seed_starting_balances(db_session):
+def seed_starting_balances(db_session, seed_user):
     sb1 = StartingBalance(
         month=date(2025, 12, 1),
         cash_balance=5000,
-        upi_balance=15000
+        upi_balance=15000,
+        user_id=seed_user["id"],
     )
     sb2 = StartingBalance(
         month=date(2026, 2, 1),
         cash_balance=3500,
-        upi_balance=12000
+        upi_balance=12000,
+        user_id=seed_user["id"],
     )
     db_session.add_all([sb1, sb2])
     db_session.commit()
@@ -92,7 +102,7 @@ def seed_starting_balances(db_session):
 
 
 @pytest.fixture(scope="function")
-def seed_transactions(db_session, seed_categories, seed_starting_balances):
+def seed_transactions(db_session, seed_user, seed_categories, seed_starting_balances):
     jan_txns = [
         Transaction(
             transaction_date=date(2026, 1, 5),
@@ -101,6 +111,7 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             payment_method="CASH",
             transaction_type="EXPENSE",
             category_id=seed_categories[0].id,
+            user_id=seed_user["id"],
         ),
         Transaction(
             transaction_date=date(2026, 1, 10),
@@ -109,6 +120,7 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             payment_method="UPI",
             transaction_type="EXPENSE",
             category_id=seed_categories[1].id,
+            user_id=seed_user["id"]
         ),
         Transaction(
             transaction_date=date(2026, 1, 15),
@@ -116,9 +128,10 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             amount=10000,
             payment_method="UPI",
             transaction_type="INCOME",
+            user_id=seed_user["id"]
         ),
     ]
-    
+
     feb_txns = [
         Transaction(
             transaction_date=date(2026, 2, 3),
@@ -127,6 +140,7 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             payment_method="CASH",
             transaction_type="EXPENSE",
             category_id=seed_categories[0].id,
+            user_id=seed_user["id"],
         ),
         Transaction(
             transaction_date=date(2026, 2, 5),
@@ -135,6 +149,7 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             payment_method="UPI",
             transaction_type="EXPENSE",
             category_id=seed_categories[0].id,
+            user_id=seed_user["id"],
         ),
         Transaction(
             transaction_date=date(2026, 2, 10),
@@ -143,6 +158,7 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             payment_method="UPI",
             transaction_type="EXPENSE",
             category_id=seed_categories[1].id,
+            user_id=seed_user["id"],
         ),
         Transaction(
             transaction_date=date(2026, 2, 15),
@@ -150,6 +166,7 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             amount=50000,
             payment_method="UPI",
             transaction_type="INCOME",
+            user_id=seed_user["id"],
         ),
         Transaction(
             transaction_date=date(2026, 2, 18),
@@ -158,6 +175,7 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             payment_method="CASH",
             transaction_type="EXPENSE",
             category_id=seed_categories[0].id,
+            user_id=seed_user["id"],
         ),
         Transaction(
             transaction_date=date(2026, 2, 20),
@@ -166,6 +184,7 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             payment_method="UPI",
             transaction_type="TRANSFER",
             is_debit=True,
+            user_id=seed_user["id"],
         ),
         Transaction(
             transaction_date=date(2026, 2, 20),
@@ -174,6 +193,7 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             payment_method="CASH",
             transaction_type="TRANSFER",
             is_debit=False,
+            user_id=seed_user["id"],
         ),
         Transaction(
             transaction_date=date(2026, 2, 25),
@@ -182,9 +202,10 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             payment_method="CASH",
             transaction_type="EXPENSE",
             category_id=seed_categories[1].id,
+            user_id=seed_user["id"],
         ),
     ]
-    
+
     mar_txns = [
         Transaction(
             transaction_date=date(2026, 3, 2),
@@ -193,6 +214,7 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             payment_method="CASH",
             transaction_type="EXPENSE",
             category_id=seed_categories[1].id,
+            user_id=seed_user["id"],
         ),
         Transaction(
             transaction_date=date(2026, 3, 10),
@@ -200,21 +222,22 @@ def seed_transactions(db_session, seed_categories, seed_starting_balances):
             amount=5000,
             payment_method="UPI",
             transaction_type="INCOME",
+            user_id=seed_user["id"],
         ),
     ]
-    
+
     all_txns = jan_txns + feb_txns + mar_txns
     db_session.add_all(all_txns)
     db_session.flush()
-    
+
     feb_txns[5].linked_transfer_id = feb_txns[6].id
     feb_txns[6].linked_transfer_id = feb_txns[5].id
-    
+
     db_session.commit()
-    
+
     for t in all_txns:
         db_session.refresh(t)
-    
+
     return {
         "jan": jan_txns,
         "feb": feb_txns,

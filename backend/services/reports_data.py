@@ -9,7 +9,7 @@ from ..utils import is_credit, is_debit
 from .balance_calculator import starting_balance_resolver
 
 
-def get_yearly_data_logic(year: int, db: Session):
+def get_yearly_data_logic(year: int, id: int, db: Session):
     monthly_data = {}
     for month in range(1, 12 + 1):
         monthly_data[month] = {
@@ -28,6 +28,7 @@ def get_yearly_data_logic(year: int, db: Session):
     all_txns = (
         db.execute(
             select(Transaction)
+            .where(Transaction.user_id == id)
             .where(extract("year", Transaction.transaction_date) == year)
             .order_by(Transaction.transaction_date)
         )
@@ -67,7 +68,7 @@ def get_yearly_data_logic(year: int, db: Session):
     final_cash_balance = total_cash_income - total_cash_spending
 
     try:
-        net_balance_change = starting_balance_resolver(date(year, 1, 1), db)
+        net_balance_change = starting_balance_resolver(date(year, 1, 1), id, db)
     except ValueError:
         raise ValueError("No starting balances")
 
@@ -88,13 +89,14 @@ def get_yearly_data_logic(year: int, db: Session):
 def get_monthly_data_logic(
     year: int,
     month: int,
+    id: int,
     db: Session,
 ):
     if not 1 <= month <= 12:
         raise ValueError("Invalid month")
 
     try:
-        starting_balances = starting_balance_resolver(date(year, month, 1), db)
+        starting_balances = starting_balance_resolver(date(year, month, 1), id, db)
     except ValueError:
         raise ValueError("No starting balance")
 
@@ -104,6 +106,7 @@ def get_monthly_data_logic(
     transactions = (
         db.execute(
             select(Transaction)
+            .where(Transaction.user_id == id)
             .where(
                 and_(
                     extract("year", Transaction.transaction_date) == year,

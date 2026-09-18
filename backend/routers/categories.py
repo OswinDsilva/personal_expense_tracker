@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from ..auth.jwt import get_current_user
+from ..auth.jwt import get_current_admin, get_current_user
 from ..database import get_db
 from ..models import Category, User
 from ..schema import CategoryRequest, CategoryResponse
@@ -15,9 +15,9 @@ router = APIRouter(prefix="/categories", tags=["categories"])
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=CategoryResponse)
 def create_category(
-    category: CategoryRequest, curr_user=Depends(get_current_user), db: Session = Depends(get_db)
-) -> CategoryResponse:
-    cat = Category(name=category.name)
+    category: CategoryRequest, curr_user=Depends(get_current_admin), db: Session = Depends(get_db)
+):
+    cat = Category(name=category.name, user_id=curr_user.id)
     try:
         db.add(cat)
         db.commit()
@@ -31,16 +31,16 @@ def create_category(
 @router.get("/", response_model=List[CategoryResponse])
 def get_all_categories(
     curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
-) -> List[CategoryResponse]:
-    categories = db.execute(select(Category)).scalars().all()
+):
+    categories = db.execute(select(Category).where(Category.user_id == curr_user.id)).scalars().all()
     return categories
 
 
 @router.get("/{id}", response_model=CategoryResponse)
 def get_category(
     id: int, curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
-) -> CategoryResponse:
-    category = db.execute(select(Category).filter(Category.id == id)).scalars().first()
+):
+    category = db.execute(select(Category).where(Category.user_id == curr_user.id).where(Category.id == id)).scalar_one_or_none()
     if category is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     return category
@@ -50,10 +50,10 @@ def get_category(
 def update_category(
     id: int,
     cat: CategoryRequest,
-    curr_user: User = Depends(get_current_user),
+    curr_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ):
-    category = db.execute(select(Category).filter(Category.id == id)).scalars().first()
+    category = db.execute(select(Category).where(Category.user_id == curr_user.id).where(Category.id == id)).scalar_one_or_none()
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     try:
@@ -69,9 +69,9 @@ def update_category(
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_category(
-    id: int, curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    id: int, curr_user: User = Depends(get_current_admin), db: Session = Depends(get_db)
 ):
-    category_to_delete = db.execute(select(Category).filter(Category.id == id)).scalars().first()
+    category_to_delete = db.execute(select(Category).where(Category.user_id == curr_user.id).where(Category.id == id)).scalar_one_or_none()
     if category_to_delete is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 

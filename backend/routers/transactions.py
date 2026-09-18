@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
-from ..auth.jwt import get_current_user
+from ..auth.jwt import get_current_admin, get_current_user
 from ..database import get_db
 from ..models import Category, Transaction, User
 from ..schema import (
@@ -24,11 +24,11 @@ router = APIRouter(prefix="/transactions", tags=["transactions"])
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=TransactionResponse)
 def create_transaction(
     transaction: TransactionCreate,
-    curr_user: User = Depends(get_current_user),
+    curr_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ):
     if transaction.category_id is not None:
-        cat = db.get(Category, transaction.category_id)
+        cat = db.execute(select(Category).where(Category.user_id == curr_user.id).where(Category.id == transaction.category_id)).scalar_one_or_none()
         if not cat:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Category does not exist"
@@ -41,6 +41,7 @@ def create_transaction(
         payment_method=transaction.payment_method,
         transaction_type=transaction.transaction_type,
         category_id=transaction.category_id,
+        user_id=curr_user.id,
     )
 
     db.add(transaction_to_add)
@@ -55,7 +56,7 @@ def create_transaction(
 )
 def create_transfer_transaction(
     transaction: TransferCreate,
-    curr_user: User = Depends(get_current_user),
+    curr_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ):
     source_transfer = Transaction(
@@ -65,6 +66,7 @@ def create_transfer_transaction(
         payment_method=transaction.source_method.value,
         transaction_type=TransactionType.TRANSFER.value,
         is_debit=True,
+        user_id = curr_user.id,
     )
     destination_transfer = Transaction(
         transaction_date=transaction.transaction_date,
@@ -73,6 +75,7 @@ def create_transfer_transaction(
         payment_method=transaction.destination_method.value,
         transaction_type=TransactionType.TRANSFER.value,
         is_debit=False,
+        user_id = curr_user.id,
     )
 
     db.add_all([source_transfer, destination_transfer])
@@ -99,7 +102,7 @@ def get_all_transactions(
     curr_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    query = select(Transaction)
+    query = select(Transaction).where(Transaction.user_id == curr_user.id)
 
     if start_date is not None:
         query = query.where(Transaction.transaction_date >= start_date)
@@ -178,7 +181,7 @@ def get_all_transactions(
 def get_transaction_by_id(
     id: int, curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    transaction = db.execute(select(Transaction).filter(Transaction.id == id)).scalars().first()
+    transaction = db.execute(select(Transaction).where(Transaction.user_id == curr_user.id).where(Transaction.id == id)).scalars().first()
 
     if not transaction:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
@@ -190,10 +193,10 @@ def get_transaction_by_id(
 def update_transaction_by_id(
     id: int,
     new_transaction: TransactionUpdate,
-    curr_user: User = Depends(get_current_user),
+    curr_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ):
-    transaction = db.execute(select(Transaction).filter(Transaction.id == id)).scalars().first()
+    transaction = db.execute(select(Transaction).where(Transaction.user_id == curr_user.id).where(Transaction.id == id)).scalars().first()
 
     if not transaction:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
@@ -214,7 +217,7 @@ def update_transaction_by_id(
 
     if "category_id" in data and data["category_id"] is not None:
         cat = (
-            db.execute(select(Category).filter(Category.id == data["category_id"]))
+            db.execute(select(Category).where(Category.user_id == curr_user.id).where(Category.id == data["category_id"]))
             .scalars()
             .first()
         )
@@ -232,16 +235,16 @@ def update_transaction_by_id(
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_transaction_by_id(
-    id: int, curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    id: int, curr_user: User = Depends(get_current_admin), db: Session = Depends(get_db)
 ):
-    transaction = db.execute(select(Transaction).filter(Transaction.id == id)).scalars().first()
+    transaction = db.execute(select(Transaction).where(Transaction.user_id == curr_user.id).where(Transaction.id == id)).scalars().first()
 
     if not transaction:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Transaction not found")
 
     if transaction.linked_transfer_id is not None:
         linked_transaction = (
-            db.execute(select(Transaction).filter(Transaction.id == transaction.linked_transfer_id))
+            db.execute(select(Transaction).where(Transaction.user_id == curr_user.id).where(Transaction.id == transaction.linked_transfer_id))
             .scalars()
             .first()
         )
@@ -259,4 +262,3 @@ def delete_transaction_by_id(
         db.delete(transaction)
 
     db.commit()
-

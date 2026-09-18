@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from ..auth.jwt import get_current_user
+from ..auth.jwt import get_current_admin, get_current_user
 from ..database import get_db
 from ..models import StartingBalance, User
 from ..schema import StartingBalanceCreate, StartingBalanceResponse, StartingBalanceUpdate
@@ -17,13 +17,14 @@ router = APIRouter(prefix="/starting-balances", tags=["starting-balances"])
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=StartingBalanceResponse)
 def create_starting_balance(
     starting_balance: StartingBalanceCreate,
-    curr_user: User = Depends(get_current_user),
+    curr_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ):
     s_balance = StartingBalance(
         month=starting_balance.month,
         cash_balance=starting_balance.cash_balance,
         upi_balance=starting_balance.upi_balance,
+        user_id = curr_user.id
     )
 
     try:
@@ -42,7 +43,7 @@ def create_starting_balance(
 def get_all_starting_balances(
     curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    starting_balances = db.execute(select(StartingBalance)).scalars().all()
+    starting_balances = db.execute(select(StartingBalance).where(StartingBalance.user_id == curr_user.id)).scalars().all()
 
     return starting_balances
 
@@ -62,7 +63,7 @@ def get_starting_balance_by_year_month(
             detail=f"Invalid year or month:{str(e)}",
         )
     starting_balance = (
-        db.execute(select(StartingBalance).filter(StartingBalance.month == target_date))
+        db.execute(select(StartingBalance).where(StartingBalance.user_id == curr_user.id).where(StartingBalance.month == target_date))
         .scalars()
         .first()
     )
@@ -76,7 +77,7 @@ def get_starting_balance_by_id(
     id: int, curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     starting_balance = (
-        db.execute(select(StartingBalance).filter(StartingBalance.id == id)).scalars().first()
+        db.execute(select(StartingBalance).where(StartingBalance.user_id ==curr_user.id).where(StartingBalance.id == id)).scalars().first()
     )
     if not starting_balance:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No record found")
@@ -87,11 +88,11 @@ def get_starting_balance_by_id(
 def update_starting_balance_by_id(
     id: int,
     s_balance: StartingBalanceUpdate,
-    curr_user: User = Depends(get_current_user),
+    curr_user: User = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ):
     starting_balance = (
-        db.execute(select(StartingBalance).filter(StartingBalance.id == id)).scalars().first()
+        db.execute(select(StartingBalance).where(StartingBalance.user_id == curr_user.id).where(StartingBalance.id == id)).scalars().first()
     )
 
     if not starting_balance:
@@ -108,10 +109,10 @@ def update_starting_balance_by_id(
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_starting_balance_by_id(
-    id: int, curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    id: int, curr_user: User = Depends(get_current_admin), db: Session = Depends(get_db)
 ):
     starting_balance = (
-        db.execute(select(StartingBalance).filter(StartingBalance.id == id)).scalars().first()
+        db.execute(select(StartingBalance).where(StartingBalance.user_id == curr_user.id).where(StartingBalance.id == id)).scalars().first()
     )
 
     if not starting_balance:

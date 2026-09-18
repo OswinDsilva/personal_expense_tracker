@@ -29,7 +29,7 @@ def get_monthly_data(
     db: Session = Depends(get_db),
 ):
     try:
-        return get_monthly_data_logic(year, month, db)
+        return get_monthly_data_logic(year, month, curr_user.id, db)
     except ValueError as e:
         if "Invalid month" in str(e):
             raise HTTPException(
@@ -48,11 +48,14 @@ def get_yearly_data(
     db: Session = Depends(get_db),
 ):
     try:
-        return get_yearly_data_logic(year, db)
+        return get_yearly_data_logic(year, curr_user.id, db)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Starting balances not found"
         )
+    except Exception as e:
+            print(f"ERROR: {type(e).__name__}: {e}")
+            raise
 
 
 @router.get("/exports/{year}/full")
@@ -65,12 +68,12 @@ def get_generate_full_year_report(
 
     with xlsxwriter.Workbook(buffer, {"in_memory": True}) as workbook:
         for month in range(1, 12 + 1):
-            monthly_data = get_monthly_data_logic(year, month, db)
+            monthly_data = get_monthly_data_logic(year, month, curr_user.id, db)
 
             month_name = map_month(month)
             add_monthly_sheet(workbook, monthly_data, month_name)
 
-        yearly_data = get_yearly_data_logic(year, db)
+        yearly_data = get_yearly_data_logic(year, curr_user.id, db)
 
         add_yearly_sheet(workbook, yearly_data, year)
 
@@ -93,7 +96,7 @@ def get_generate_monthly_report(
     if not 1 <= month <= 12:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid month value")
 
-    data = get_monthly_data_logic(year, month, db)
+    data = get_monthly_data_logic(year, month, curr_user.id, db)
 
     month_name = map_month(month)
 
@@ -117,7 +120,7 @@ def get_generate_yearly_report(
     curr_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    data = get_yearly_data_logic(year, db)
+    data = get_yearly_data_logic(year, curr_user.id, db)
 
     buffer = io.BytesIO()
 
@@ -144,7 +147,7 @@ def get_preview_monthly(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid month value")
 
     try:
-        data = get_monthly_data_logic(year, month, db)
+        data = get_monthly_data_logic(year, month, curr_user.id, db)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Starting balance not found"
@@ -196,7 +199,7 @@ def get_preview_yearly(
     db: Session = Depends(get_db),
 ):
     try:
-        data = get_yearly_data_logic(year, db)
+        data = get_yearly_data_logic(year, curr_user.id, db)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Starting balance not found"

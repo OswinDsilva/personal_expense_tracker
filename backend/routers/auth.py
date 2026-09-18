@@ -16,9 +16,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def register_user(req: RegisterRequest, db: Session = Depends(get_db)):
     user = db.query(User).first()
 
-    if user is not None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Registration is closed")
-
     user = User(username=req.username, password=req.password, role="ADMIN")
     db.add(user)
     db.flush()
@@ -27,6 +24,7 @@ def register_user(req: RegisterRequest, db: Session = Depends(get_db)):
         month=date(1980, 1, 1),
         cash_balance=0,
         upi_balance=0,
+        user_id=user.id
     )
 
     db.add(starting_anchor)

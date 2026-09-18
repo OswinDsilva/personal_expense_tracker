@@ -8,12 +8,12 @@ def test_register_first_user_as_admin(client):
     assert "access_token" in response.json()
 
 
-def test_register_subsequent_user_fails(client):
+def test_register_subsequent_user_succeeds(client):
     client.post("/auth/register", json={"username": "test", "password": "test1234"})
 
-    response = client.post("/auth/register", json={"username": "test", "password": "test1234"})
+    response = client.post("/auth/register", json={"username": "test2", "password": "test1234"})
 
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.status_code == status.HTTP_201_CREATED
 
 
 def test_login_success(
