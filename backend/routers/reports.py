@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from ..auth.jwt import get_current_user, get_current_admin
+from ..auth.jwt import get_current_user
 from ..database import get_db
 from ..models import User
 from ..schema import MonthlyDataResponse, PreviewResponse, YearlyDataResponse
