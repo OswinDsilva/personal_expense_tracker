@@ -39,7 +39,7 @@ class Transaction(Base):
         server_default=func.now(),
         onupdate=lambda: datetime.now(timezone.utc),
     )
-    user_id: Mapped[int | None] = mapped_column(
+    user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", name="fk_user_id")
     )
 

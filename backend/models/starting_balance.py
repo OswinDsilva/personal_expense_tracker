@@ -16,7 +16,7 @@ class StartingBalance(Base):
     cash_balance: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2))
     upi_balance: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    user_id: Mapped[int | None] = mapped_column(
+    user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", name="fk_user_id")
     )
 
