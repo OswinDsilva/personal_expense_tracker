@@ -158,3 +158,22 @@ def test_get_full_year_report_no_auth(client, seed_transactions):
     response = client.get("reports/exports/2026/full")
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+# multi-user
+def test_reports_do_not_leak_across_users(
+    client, seed_transactions, seed_second_user_with_data
+):
+    response = client.get(
+        "/reports/data/2026/2", headers=seed_second_user_with_data["headers"]
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    assert float(data["starting_balance"]["cash"]) == 100.00
+    assert float(data["starting_balance"]["upi"]) == 200.00
+
+    assert float(data["totals"]["cash_spending"]) == 50.00
+    assert float(data["totals"]["upi_spending"]) == 0.00
+    assert float(data["totals"]["cash_income"]) == 0.00
+    assert float(data["totals"]["upi_income"]) == 0.00
