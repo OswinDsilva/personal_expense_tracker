@@ -14,6 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from ..database import Base
 from .category import Category
+from .user import User  # noqa: F401
 
 
 class Transaction(Base):
@@ -37,6 +38,9 @@ class Transaction(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=lambda: datetime.now(timezone.utc),
+    )
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", name="fk_user_id")
     )
 
     category: Mapped["Category"] = relationship()
