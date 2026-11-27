@@ -102,6 +102,9 @@ def seed_second_user_with_data(db_session):
     return {
         "user_id": other_user.id,
         "headers": {"Authorization": f"Bearer {token}"},
+        "categories": [other_category],
+        "starting_balances": [other_balance],
+        "transactions": [other_txn],
         "transaction": other_txn,
     }
 
