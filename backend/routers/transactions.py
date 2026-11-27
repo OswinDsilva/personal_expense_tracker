@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
-from ..auth.jwt import get_current_admin, get_current_user
+from ..auth.jwt import get_current_user
 from ..database import get_db
 from ..models import Category, Transaction, User
 from ..schema import (
@@ -24,7 +24,7 @@ router = APIRouter(prefix="/transactions", tags=["transactions"])
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=TransactionResponse)
 def create_transaction(
     transaction: TransactionCreate,
-    curr_user: User = Depends(get_current_admin),
+    curr_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     if transaction.category_id is not None:
@@ -56,7 +56,7 @@ def create_transaction(
 )
 def create_transfer_transaction(
     transaction: TransferCreate,
-    curr_user: User = Depends(get_current_admin),
+    curr_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     source_transfer = Transaction(
@@ -193,7 +193,7 @@ def get_transaction_by_id(
 def update_transaction_by_id(
     id: int,
     new_transaction: TransactionUpdate,
-    curr_user: User = Depends(get_current_admin),
+    curr_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     transaction = db.execute(select(Transaction).where(Transaction.user_id == curr_user.id).where(Transaction.id == id)).scalars().first()
@@ -235,7 +235,7 @@ def update_transaction_by_id(
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_transaction_by_id(
-    id: int, curr_user: User = Depends(get_current_admin), db: Session = Depends(get_db)
+    id: int, curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     transaction = db.execute(select(Transaction).where(Transaction.user_id == curr_user.id).where(Transaction.id == id)).scalars().first()
 

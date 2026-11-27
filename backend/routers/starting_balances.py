@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from ..auth.jwt import get_current_admin, get_current_user
+from ..auth.jwt import get_current_user
 from ..database import get_db
 from ..models import StartingBalance, User
 from ..schema import StartingBalanceCreate, StartingBalanceResponse, StartingBalanceUpdate
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/starting-balances", tags=["starting-balances"])
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=StartingBalanceResponse)
 def create_starting_balance(
     starting_balance: StartingBalanceCreate,
-    curr_user: User = Depends(get_current_admin),
+    curr_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     s_balance = StartingBalance(
@@ -88,7 +88,7 @@ def get_starting_balance_by_id(
 def update_starting_balance_by_id(
     id: int,
     s_balance: StartingBalanceUpdate,
-    curr_user: User = Depends(get_current_admin),
+    curr_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     starting_balance = (
@@ -109,7 +109,7 @@ def update_starting_balance_by_id(
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_starting_balance_by_id(
-    id: int, curr_user: User = Depends(get_current_admin), db: Session = Depends(get_db)
+    id: int, curr_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     starting_balance = (
         db.execute(select(StartingBalance).where(StartingBalance.user_id == curr_user.id).where(StartingBalance.id == id)).scalars().first()
